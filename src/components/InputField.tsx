@@ -64,11 +64,10 @@ export default function InputField({
 
       {/* Input Container */}
       <div
-        className={`relative flex items-center w-full rounded-xl bg-gray-50/80 border transition-all duration-200 ${
-          error
+        className={`relative flex items-center w-full rounded-xl bg-gray-50/80 border transition-all duration-200 ${error
             ? 'border-red-300 focus-within:border-red-500 focus-within:ring-4 focus-within:ring-red-500/10 focus-within:bg-white'
             : 'border-gray-200 focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 focus-within:bg-white hover:border-gray-300'
-        } ${disabled ? 'opacity-60 cursor-not-allowed bg-gray-100' : ''} ${wrapperClassName}`}
+          } ${disabled ? 'opacity-60 cursor-not-allowed bg-gray-100' : ''} ${wrapperClassName}`}
       >
         {/* Left Icon */}
         {effectiveLeftIcon && (
@@ -86,9 +85,8 @@ export default function InputField({
           placeholder={placeholder}
           disabled={disabled}
           required={required}
-          className={`w-full py-3 text-sm text-gray-900 bg-transparent placeholder:text-gray-400 focus:outline-none disabled:cursor-not-allowed ${
-            effectiveLeftIcon ? 'pl-2' : 'pl-3.5'
-          } ${rightIcon || isPasswordType ? 'pr-2' : 'pr-3.5'} ${className}`}
+          className={`w-full py-3 text-sm text-gray-900 bg-transparent placeholder:text-gray-400 focus:outline-none disabled:cursor-not-allowed ${effectiveLeftIcon ? 'pl-2' : 'pl-3.5'
+            } ${rightIcon || isPasswordType ? 'pr-2' : 'pr-3.5'} ${className}`}
           {...props}
         />
 
