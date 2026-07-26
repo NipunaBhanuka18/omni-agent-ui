@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import InputField from '@/components/InputField';
 import Button from '@/components/Button';
+import { useAuthStore } from '@/store/authStore';
 
 // TypeScript interface for the form state (email and password)
 export interface LoginFormState {
@@ -15,6 +17,9 @@ export interface FormErrors {
 }
 
 export default function Login() {
+  const navigate = useNavigate();
+  const login = useAuthStore((state) => state.login);
+
   const [formData, setFormData] = useState<LoginFormState>({
     email: '',
     password: '',
@@ -64,10 +69,8 @@ export default function Login() {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      alert(`Logged in successfully as ${formData.email}`);
-    }, 1500);
+    login({ name: 'Admin', role: 'admin' }, 'mock-jwt-token-123');
+    navigate('/dashboard');
   };
 
   return (
