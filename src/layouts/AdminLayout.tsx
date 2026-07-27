@@ -5,7 +5,6 @@ import {
   LayoutGrid,
   Users,
   Settings,
-  LogOut,
   Bell,
   Search,
   HelpCircle,
@@ -26,6 +25,7 @@ export default function AdminLayout() {
     navigate("/login");
   };
 
+  // Updated icon sizes: Dashboard 18, User Management 25, Settings 20
   const navItems = [
     {
       name: "Dashboard",
@@ -39,7 +39,7 @@ export default function AdminLayout() {
       path: "/users",
       icon: Users,
       iconBg: "#C7CFFF",
-      iconSize: 18,
+      iconSize: 25,
     },
     {
       name: "Settings",
@@ -57,7 +57,6 @@ export default function AdminLayout() {
         {/* Logo Header */}
         <div className="pt-[55px] pb-6 pl-[18px]">
           <div className="flex items-center gap-4">
-            {/* The dark background rectangle */}
             <div className="w-[65px] h-[65px] bg-black rounded-[20px] flex items-center justify-center shrink-0">
               <img
                 src={logo}
@@ -66,7 +65,6 @@ export default function AdminLayout() {
               />
             </div>
 
-            {/* Grouping the Title and Subtitle together */}
             <div className="flex flex-col">
               <h1
                 className="text-[20px] font-bold tracking-[0.24px] leading-[16px]"
@@ -93,16 +91,20 @@ export default function AdminLayout() {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`flex items-center gap-4 h-[45px] w-[289px] pl-[0px] text-sm font-medium transition-all duration-300 ease-out text-[#434655] rounded-tl-[8px] rounded-tr-[40px] rounded-br-[40px] rounded-bl-[8px] border-2 ${
-                  active
-                    ? "border-blue-600"
-                    : "border-transparent hover:bg-slate-200/60"
+                style={{ "--icon-bg": item.iconBg } as React.CSSProperties}
+                // REMOVED hover:bg-slate-200/60 from here so the whole row doesn't fill
+                className={`group flex items-center gap-4 h-[45px] w-[289px] pl-[0px] text-sm font-medium transition-all duration-300 ease-out text-[#434655] rounded-tl-[8px] rounded-tr-[40px] rounded-br-[40px] rounded-bl-[8px] border-2 ${
+                  active ? "border-blue-600" : "border-transparent"
                 }`}
               >
-                {/* The Pastel Icon Container */}
+                {/* Icon Container - ONLY this square fills with pastel color on hover */}
                 <div
-                  className="w-[46px] h-[45px] flex items-center justify-center rounded-tl-[8px] rounded-tr-[40px] rounded-br-[40px] rounded-bl-[8px] shrink-0"
-                  style={{ backgroundColor: item.iconBg }}
+                  className={`w-[46px] h-[45px] flex items-center justify-center rounded-tl-[8px] rounded-tr-[40px] rounded-br-[40px] rounded-bl-[8px] shrink-0 transition-colors duration-300 ${
+                    active
+                      ? ""
+                      : "bg-transparent group-hover:bg-[var(--icon-bg)]"
+                  }`}
+                  style={active ? { backgroundColor: item.iconBg } : {}}
                 >
                   <Icon
                     size={item.iconSize}
@@ -116,14 +118,18 @@ export default function AdminLayout() {
           })}
         </nav>
 
-        {/* Logout Button at the bottom */}
-        <div className="p-4">
+        {/* Logout Button - Exact Figma Details, No Icon */}
+        <div className="p-4 flex justify-center">
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors shadow-lg shadow-blue-600/20"
+            className="flex items-center justify-center h-[32px] w-[243px] py-[8px] px-[16px] rounded-[8px] bg-[#2563EB] hover:bg-blue-700 transition-colors"
           >
-            <LogOut size={20} />
-            Logout
+            <span
+              className="text-[12px] font-medium tracking-[0.24px] leading-[16px] text-[#EEEFFF]"
+              style={{ fontFamily: "Inter, sans-serif" }}
+            >
+              Logout
+            </span>
           </button>
         </div>
       </aside>
@@ -137,9 +143,7 @@ export default function AdminLayout() {
             background: "linear-gradient(90deg, #C2FFEA 0%, #DEE8FF 100%)",
           }}
         >
-          {/* Left side: Logo Box and Search Bar */}
           <div className="flex items-center gap-4">
-            {/* Small Black Logo Box from your Figma details */}
             <div className="w-[35px] h-[35px] bg-black rounded-[20px] flex items-center justify-center shrink-0">
               <img
                 src={logo}
@@ -148,7 +152,6 @@ export default function AdminLayout() {
               />
             </div>
 
-            {/* Search Bar */}
             <div className="relative w-[448px]">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]"
@@ -164,14 +167,11 @@ export default function AdminLayout() {
             </div>
           </div>
 
-          {/* Right side: Icons, Divider, and Shield */}
           <div className="flex items-center gap-4">
-            {/* Bell Icon */}
             <button className="text-[#434655] hover:opacity-80 transition-opacity">
               <Bell size={20} strokeWidth={2} className="w-[16px] h-[20px]" />
             </button>
 
-            {/* Question Mark Icon */}
             <button className="text-[#434655] hover:opacity-80 transition-opacity pl-4">
               <HelpCircle
                 size={20}
@@ -180,10 +180,8 @@ export default function AdminLayout() {
               />
             </button>
 
-            {/* Vertical Divider */}
             <div className="w-px h-[32px] bg-[#C3C6D7] mx-2"></div>
 
-            {/* Shield Image */}
             <img
               src={shield}
               alt="Security Shield"
@@ -191,6 +189,7 @@ export default function AdminLayout() {
             />
           </div>
         </header>
+
         {/* Page Content (Dashboard renders here) */}
         <main className="flex-1 p-8 overflow-y-auto bg-slate-100">
           <Outlet />

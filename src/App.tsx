@@ -8,18 +8,11 @@ import {
 import Login from "@/pages/auth/Login";
 import LoginAdmin from "@/pages/auth/LoginAdmin";
 import LoginAdminPortal from "@/pages/auth/LoginAdminPortal";
-import AdminLayout from "@/layouts/AdminLayout"; // Importing your layout!
-import Dashboard from "@/pages/dashboard/Dashboard"; // Importing your dashboard!
+import AdminLayout from "@/layouts/AdminLayout";
+import Dashboard from "@/pages/dashboard/Dashboard";
+import UserManagement from "@/pages/users/UserManagement";
+import Settings from "@/pages/settings/Settings";
 import { useAuthStore } from "@/store/authStore";
-import {
-  LayoutGrid,
-  Users,
-  Settings,
-  LogOut,
-  Bell,
-  Search,
-  HelpCircle,
-} from "lucide-react";
 
 // Protected Route component: Redirects unauthenticated users to /login
 const ProtectedRoute = () => {
@@ -58,27 +51,10 @@ function App() {
 
         {/* Protected Routes (Can only see if logged IN) */}
         <Route element={<ProtectedRoute />}>
-          {/* AdminLayout wraps ALL the admin pages */}
           <Route element={<AdminLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-
-            {/* Placeholder routes for now so the sidebar links work! */}
-            <Route
-              path="/users"
-              element={
-                <div className="p-8 text-2xl font-bold">
-                  User Management Page Coming Soon...
-                </div>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <div className="p-8 text-2xl font-bold">
-                  Settings Page Coming Soon...
-                </div>
-              }
-            />
+            <Route path="/users" element={<UserManagement />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
         </Route>
 
