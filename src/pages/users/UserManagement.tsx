@@ -27,14 +27,6 @@ const userData = [
     status: "SUSPENDED",
     lastLogin: "12 days ago",
   },
-  {
-    id: 4,
-    name: "Pubudini Admin",
-    email: "pubudini@slt.lk",
-    role: "Administrator",
-    status: "ACTIVE",
-    lastLogin: "Just now",
-  },
 ];
 
 export default function UserManagement() {
