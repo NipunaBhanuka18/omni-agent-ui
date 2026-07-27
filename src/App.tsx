@@ -8,6 +8,7 @@ import {
 import Login from "@/pages/auth/Login";
 import LoginAdmin from "@/pages/auth/LoginAdmin";
 import LoginAdminPortal from "@/pages/auth/LoginAdminPortal";
+import ForgetPassword from "@/pages/auth/ForgetPassword";
 import AdminLayout from "@/layouts/AdminLayout";
 import Dashboard from "@/pages/dashboard/Dashboard";
 import UserManagement from "@/pages/users/UserManagement";
@@ -47,6 +48,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/login-admin" element={<LoginAdmin />} />
           <Route path="/login-portal" element={<LoginAdminPortal />} />
+          <Route path="/forget-password" element={<ForgetPassword />} />
         </Route>
 
         {/* Protected Routes (Can only see if logged IN) */}
