@@ -3,8 +3,11 @@ import React from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutGrid,
-  Users,
+  Code2,
+  SlidersHorizontal,
+  Bot,
   Settings,
+  Users,
   Bell,
   Search,
   HelpCircle,
@@ -25,7 +28,7 @@ export default function AdminLayout() {
     navigate("/login");
   };
 
-  // Updated icon sizes: Dashboard 18, User Management 25, Settings 20
+  // Updated colors: Dashboard & Settings are unique, all others are bluish (#C7CFFF)
   const navItems = [
     {
       name: "Dashboard",
@@ -33,6 +36,28 @@ export default function AdminLayout() {
       icon: LayoutGrid,
       iconBg: "#FFDBCD",
       iconSize: 18,
+    },
+    { name: "API", path: "/api", icon: Code2, iconBg: "#C7CFFF", iconSize: 20 },
+    {
+      name: "Channel Configuration",
+      path: "/channels",
+      icon: SlidersHorizontal,
+      iconBg: "#C7CFFF",
+      iconSize: 20,
+    },
+    {
+      name: "AI Agents",
+      path: "/agents",
+      icon: Bot,
+      iconBg: "#C7CFFF",
+      iconSize: 20,
+    },
+    {
+      name: "Settings",
+      path: "/settings",
+      icon: Settings,
+      iconBg: "#D8FFE2",
+      iconSize: 20,
     },
     {
       name: "User Management",
@@ -42,10 +67,10 @@ export default function AdminLayout() {
       iconSize: 25,
     },
     {
-      name: "Settings",
-      path: "/settings",
-      icon: Settings,
-      iconBg: "#D8FFE2",
+      name: "Notification Management",
+      path: "/notifications",
+      icon: Bell,
+      iconBg: "#C7CFFF",
       iconSize: 20,
     },
   ];
@@ -83,7 +108,8 @@ export default function AdminLayout() {
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex-1 px-2 pt-8 space-y-2">
+        {/* Added overflow-y-auto so it scrolls nicely if the menu gets too long */}
+        <nav className="flex-1 px-2 pt-8 space-y-2 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -97,14 +123,10 @@ export default function AdminLayout() {
                   active ? "border-blue-600" : "border-transparent"
                 }`}
               >
-                {/* Icon Container - ONLY this square fills with pastel color on hover */}
+                {/* Icon Container - Pastel color is ALWAYS visible */}
                 <div
-                  className={`w-[46px] h-[45px] flex items-center justify-center rounded-tl-[8px] rounded-tr-[40px] rounded-br-[40px] rounded-bl-[8px] shrink-0 transition-colors duration-300 ${
-                    active
-                      ? ""
-                      : "bg-transparent group-hover:bg-[var(--icon-bg)]"
-                  }`}
-                  style={active ? { backgroundColor: item.iconBg } : {}}
+                  className="w-[46px] h-[45px] flex items-center justify-center rounded-tl-[8px] rounded-tr-[40px] rounded-br-[40px] rounded-bl-[8px] shrink-0 transition-colors duration-300"
+                  style={{ backgroundColor: item.iconBg }}
                 >
                   <Icon
                     size={item.iconSize}
@@ -119,7 +141,7 @@ export default function AdminLayout() {
         </nav>
 
         {/* Logout Button - Exact Figma Details, No Icon */}
-        <div className="p-4 flex justify-center">
+        <div className="p-4 flex justify-center shrink-0">
           <button
             onClick={handleLogout}
             className="flex items-center justify-center h-[32px] w-[243px] py-[8px] px-[16px] rounded-[8px] bg-[#2563EB] hover:bg-blue-700 transition-colors"
@@ -191,7 +213,7 @@ export default function AdminLayout() {
         </header>
 
         {/* Page Content (Dashboard renders here) */}
-        <main className="flex-1 p-8 overflow-y-auto bg-slate-100">
+        <main className="flex-1 p-8 overflow-y-auto overflow-x-hidden bg-slate-100">
           <Outlet />
         </main>
       </div>

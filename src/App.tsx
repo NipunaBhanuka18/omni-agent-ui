@@ -12,6 +12,10 @@ import AdminLayout from "@/layouts/AdminLayout";
 import Dashboard from "@/pages/dashboard/Dashboard";
 import UserManagement from "@/pages/users/UserManagement";
 import Settings from "@/pages/settings/Settings";
+import Api from "@/pages/api/Api";
+import Channels from "@/pages/channels/Channels";
+import Agents from "@/pages/agents/Agents";
+import Notifications from "@/pages/notifications/Notifications";
 import { useAuthStore } from "@/store/authStore";
 
 // Protected Route component: Redirects unauthenticated users to /login
@@ -52,9 +56,16 @@ function App() {
         {/* Protected Routes (Can only see if logged IN) */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AdminLayout />}>
+            {/* Existing Pages */}
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/users" element={<UserManagement />} />
             <Route path="/settings" element={<Settings />} />
+
+            {/* New Pages */}
+            <Route path="/api" element={<Api />} />
+            <Route path="/channels" element={<Channels />} />
+            <Route path="/agents" element={<Agents />} />
+            <Route path="/notifications" element={<Notifications />} />
           </Route>
         </Route>
 
