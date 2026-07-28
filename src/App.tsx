@@ -9,6 +9,7 @@ import Login from "@/pages/auth/Login";
 import LoginAdmin from "@/pages/auth/LoginAdmin";
 import LoginAdminPortal from "@/pages/auth/LoginAdminPortal";
 import ForgetPassword from "@/pages/auth/ForgetPassword";
+import StartPage from "@/pages/auth/StartPage";
 import AdminLayout from "@/layouts/AdminLayout";
 import Dashboard from "@/pages/dashboard/Dashboard";
 import UserManagement from "@/pages/users/UserManagement";
@@ -49,6 +50,8 @@ function App() {
       <Routes>
         {/* Public/Guest Routes (Can only see if logged OUT) */}
         <Route element={<PublicRoute />}>
+          <Route path="/" element={<StartPage />} />
+          <Route path="/start" element={<StartPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/login-admin" element={<LoginAdmin />} />
           <Route path="/login-portal" element={<LoginAdminPortal />} />
@@ -75,7 +78,7 @@ function App() {
         <Route
           path="*"
           element={
-            <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
+            <Navigate to={isAuthenticated ? "/dashboard" : "/"} replace />
           }
         />
       </Routes>
