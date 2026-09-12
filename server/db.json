@@ -1,0 +1,51 @@
+{
+  "registrations": [
+    {
+      "id": 1789113588242,
+      "status": "approved",
+      "createdAt": "2026-09-11T07:59:48.242Z",
+      "companyName": "google",
+      "companyEmail": "google@gmail.com",
+      "phone": "+94712222222",
+      "website": "http://googl.com",
+      "companyType": "Technology",
+      "country": "Sri Lanka",
+      "city": "colombo",
+      "address": "77/2",
+      "employeeCount": "1000+",
+      "about": "hello",
+      "adminName": "kawya dissanayaka",
+      "adminEmail": "admin@google.com",
+      "adminPhone": "+94713244444",
+      "industry": "Technology"
+    },
+    {
+      "id": 1789183598834,
+      "status": "approved",
+      "createdAt": "2026-09-12T03:26:38.834Z",
+      "companyName": "apple",
+      "companyEmail": "nethminikavindi1@gmail.com",
+      "phone": "+94712222223",
+      "website": "http://apple.com",
+      "companyType": "Technology",
+      "country": "Sri Lanka",
+      "city": "",
+      "address": "abc",
+      "employeeCount": "1-10",
+      "about": "hi",
+      "adminName": "kavindi",
+      "adminEmail": "nethminikavindi1@gmail.com",
+      "adminPhone": "0712345678",
+      "industry": "Technology"
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "email": "superadmin@slt.lk",
+      "password": "admin123",
+      "name": "Super Admin",
+      "role": "superadmin"
+    }
+  ]
+}
