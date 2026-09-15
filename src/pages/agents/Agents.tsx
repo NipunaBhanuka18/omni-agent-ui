@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
-import { Bot, Shield, Play, Terminal, Cpu, Database, CheckCircle2, AlertTriangle, RefreshCw, Send, Plus, ArrowLeft, Building2 } from 'lucide-react';
+import { Bot, Shield, Play, Terminal, Cpu, Database, CheckCircle2, AlertTriangle, RefreshCw, Send, Plus, ArrowLeft, Building2, X } from 'lucide-react';
 import Button from '@/components/Button';
 import InputField from '@/components/InputField';
+import { apiClient } from '@/api/apiClient';
 
 export default function Agents() {
   const [selectedOrg, setSelectedOrg] = useState<string | null>('ABC Company (pvt) Ltd');
   const [activeChannelTab, setActiveChannelTab] = useState<'whatsapp' | 'messenger' | 'sms' | 'email'>('whatsapp');
   const [showTestDrawer, setShowTestDrawer] = useState(false);
   const [showKnowledgeModal, setShowKnowledgeModal] = useState(false);
+  const [showCreateAgentModal, setShowCreateAgentModal] = useState(false);
+  const [newAgentName, setNewAgentName] = useState('');
+  const [newAgentPrompt, setNewAgentPrompt] = useState('You are an helpful AI customer support agent for SLT.');
   const [selectedBaseModel, setSelectedBaseModel] = useState('gpt4');
 
   // Test Chat Drawer State
@@ -53,22 +57,58 @@ export default function Agents() {
     email: { name: 'Omni Email Agent v.2.4', status: 'Online', model: 'SLT-LLM-v2.4' },
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputMessage.trim()) return;
+  const handleSendMessage = async (e: React.FormEvent, intentOverride?: string) => {
+    if (e) e.preventDefault();
+    const intentToRun = intentOverride || 'check_balance';
+    const textToSend = inputMessage.trim() || `Run Intent: ${intentToRun}`;
+    if (!textToSend && !intentOverride) return;
 
-    const userMsg = { id: Date.now(), sender: 'user', text: inputMessage };
+    const userMsg = { id: Date.now(), sender: 'user', text: textToSend };
     setMessages((prev) => [...prev, userMsg]);
     setInputMessage('');
 
-    setTimeout(() => {
-      const botReply = {
-        id: Date.now() + 1,
-        sender: 'bot',
-        text: `[AI Agent ${agentConfigByChannel[activeChannelTab].name} Response]: Processed request for "${inputMessage}". All systems operating nominally.`
-      };
-      setMessages((prev) => [...prev, botReply]);
-    }, 600);
+    try {
+      const res = await fetch('http://localhost:3001/api/agent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer dev-token-staff',
+          'x-tenant-id': 'dev-tenant-local',
+          'x-channel': activeChannelTab,
+        },
+        body: JSON.stringify({
+          intent: intentToRun,
+          params: { query: textToSend }
+        })
+      });
+
+      const resData = await res.json();
+      if (resData.success) {
+        let replyStr = `[Backend Agent ${agentConfigByChannel[activeChannelTab].name}]: Intent '${intentToRun}' executed successfully.`;
+        if (intentToRun === 'check_balance') {
+          replyStr = `[Billing Agent]: Balance is ${resData.data?.currentBalance || 'LKR 3,450.00'}. Due Date: ${resData.data?.dueDate || '2026-09-28'}.`;
+        } else if (intentToRun === 'pay_bill') {
+          replyStr = `[Billing Agent]: Payment confirmed! Transaction ID: ${resData.data?.transactionId || 'TXN-88219482'}.`;
+        } else if (intentToRun === 'check_usage') {
+          replyStr = `[Usage Agent]: Used ${resData.data?.usedDataGB || '68.4'} GB of ${resData.data?.totalDataGB || '100'} GB. Voice: ${resData.data?.voiceMinutesUsed || '420'} mins.`;
+        } else if (intentToRun === 'troubleshoot_router') {
+          replyStr = `[Support Agent RAG]: Solution: ${resData.data?.result?.title || 'Power cycle router and check LAN cabling.'}`;
+        }
+
+        setMessages((prev) => [...prev, { id: Date.now() + 1, sender: 'bot', text: replyStr }]);
+      } else {
+        setMessages((prev) => [...prev, { id: Date.now() + 1, sender: 'bot', text: `⚠️ Agent Error: ${resData.error?.message || 'Action failed'}` }]);
+      }
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: 'bot',
+          text: `[AI Agent ${agentConfigByChannel[activeChannelTab].name} Response]: Processed intent '${intentToRun}' (Simulated fallback).`
+        }
+      ]);
+    }
   };
 
   return (
@@ -177,12 +217,21 @@ export default function Agents() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-black text-slate-900">AI Agent Fleet</h3>
-              <button
-                onClick={() => setShowKnowledgeModal(true)}
-                className="text-xs font-bold text-purple-600 hover:underline"
-              >
-                Manage Knowledge Base
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowCreateAgentModal(true)}
+                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Create Agent (`POST /agents`)</span>
+                </button>
+                <button
+                  onClick={() => setShowKnowledgeModal(true)}
+                  className="text-xs font-bold text-purple-600 hover:underline"
+                >
+                  Manage Knowledge Base
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -412,6 +461,91 @@ export default function Agents() {
                 Close Modal
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Agent Modal (`POST /agents`) */}
+      {showCreateAgentModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 font-sans">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-slate-200 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-base font-black text-slate-900">Create New AI Agent</h3>
+                <span className="text-[10px] text-indigo-600 font-mono font-semibold">Endpoint: POST /agents</span>
+              </div>
+              <button onClick={() => setShowCreateAgentModal(false)} className="p-1 rounded-lg hover:bg-slate-100">
+                <X className="w-5 h-5 text-slate-500" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  await apiClient.post('/agents', {
+                    name: newAgentName || `Agent-${activeChannelTab.toUpperCase()}`,
+                    channel: activeChannelTab,
+                    model: selectedBaseModel,
+                    prompt: newAgentPrompt,
+                    tools: ['check_balance', 'pay_bill', 'check_usage', 'troubleshoot_router'],
+                  });
+                  alert(`Agent "${newAgentName || 'New Agent'}" created successfully via POST /agents!`);
+                } catch (err: any) {
+                  alert(`Created agent "${newAgentName || 'New Agent'}" (Simulation Mode)`);
+                }
+                setShowCreateAgentModal(false);
+              }}
+              className="space-y-4 text-xs"
+            >
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Agent Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. SLT Whatsapp Customer Assistant"
+                  value={newAgentName}
+                  onChange={(e) => setNewAgentName(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Channel Binding</label>
+                <input
+                  type="text"
+                  value={activeChannelTab.toUpperCase()}
+                  disabled
+                  className="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl font-bold text-indigo-600"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">System Prompt / Instructions</label>
+                <textarea
+                  rows={3}
+                  value={newAgentPrompt}
+                  onChange={(e) => setNewAgentPrompt(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateAgentModal(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-md"
+                >
+                  Save Agent
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
