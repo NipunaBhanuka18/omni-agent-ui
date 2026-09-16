@@ -84,7 +84,30 @@ const activityLogs = [
   },
 ];
 
+import { apiClient } from "@/api/apiClient";
+
 export default function Dashboard() {
+  const [metrics, setMetrics] = React.useState<any>({
+    totalUsers: "1,429,203",
+    activeConnections: "842,091",
+    csatScore: "4.8 / 5.0",
+    missedHandoffs: "2",
+  });
+
+  React.useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const data = await apiClient.get('/tenants/metrics');
+        if (data && data.metrics) {
+          setMetrics(data.metrics);
+        }
+      } catch (e) {
+        // use default mock metrics
+      }
+    };
+    fetchMetrics();
+  }, []);
+
   return (
     <div className="h-full flex flex-col">
       {/* Top Header & Actions */}

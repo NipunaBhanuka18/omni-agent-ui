@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import InputField from '@/components/InputField';
 import Button from '@/components/Button';
+import ToastContainer, { type ToastMessage } from '@/components/Toast';
 
 export default function ForgetPassword() {
   const [step, setStep] = useState<number>(1);
@@ -10,6 +11,16 @@ export default function ForgetPassword() {
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [emailError, setEmailError] = useState<string>('');
   const [passwordError, setPasswordError] = useState<string>('');
+
+  // Toasts state
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const addToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    const id = Date.now().toString();
+    setToasts((prev) => [...prev, { id, message, type }]);
+  };
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
 
   const navigate = useNavigate();
 
@@ -42,8 +53,10 @@ export default function ForgetPassword() {
       return;
     }
     setPasswordError('');
-    alert('Password reset successfully! Redirecting to login...');
-    navigate('/login');
+    addToast('Password reset successfully! Redirecting to login...', 'success');
+    setTimeout(() => {
+      navigate('/login');
+    }, 1500);
   };
 
   return (
@@ -320,6 +333,7 @@ export default function ForgetPassword() {
         </a>
         <span>© 2026 OmniAI Corp.</span>
       </div>
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 }
