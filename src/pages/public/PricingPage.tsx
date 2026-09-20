@@ -1,6 +1,5 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Zap, HelpCircle } from 'lucide-react';
+import { Check, HelpCircle } from 'lucide-react';
 
 export default function PricingPage() {
   const plans = [
@@ -11,7 +10,7 @@ export default function PricingPage() {
       period: '/ 7 days',
       channels: '1 Channel',
       badge: 'Trial',
-      badgeBg: 'bg-slate-700 text-slate-200',
+      badgeBg: 'bg-slate-800 text-slate-300 border border-slate-700',
       features: [
         '1 AI Agent',
         'Web URL Knowledge Base',
@@ -31,7 +30,7 @@ export default function PricingPage() {
       period: '/ 7 days',
       channels: '3 Channels',
       badge: 'Popular',
-      badgeBg: 'bg-indigo-600 text-white',
+      badgeBg: 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40',
       featured: true,
       features: [
         '3 AI Agents',
@@ -52,7 +51,7 @@ export default function PricingPage() {
       period: '/ 30 days',
       channels: '5 Channels',
       badge: 'Best Value',
-      badgeBg: 'bg-purple-600 text-white',
+      badgeBg: 'bg-purple-500/20 text-purple-300 border border-purple-500/40',
       features: [
         '10 AI Agents',
         'Document Files & URL Knowledge',
@@ -73,7 +72,7 @@ export default function PricingPage() {
       period: '/ 30 days',
       channels: 'Unlimited',
       badge: 'Unlimited',
-      badgeBg: 'bg-cyan-500 text-slate-900',
+      badgeBg: 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40',
       features: [
         'Unlimited AI Agents',
         'Unlimited Knowledge Base',
@@ -93,10 +92,10 @@ export default function PricingPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Title Header */}
       <div className="text-center max-w-3xl mx-auto mb-12">
-        <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
+        <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
           Choose Your Workspace Plan
         </h1>
-        <p className="text-slate-600 text-xs sm:text-sm mt-3 leading-relaxed font-medium">
+        <p className="text-slate-300 text-xs sm:text-sm mt-3 leading-relaxed font-medium">
           Flexible pricing designed to empower any team to launch, scale, and automate customer support with Omni AI Agents.
         </p>
       </div>
@@ -106,10 +105,10 @@ export default function PricingPage() {
         {plans.map((plan) => (
           <div
             key={plan.name}
-            className={`bg-slate-900 text-white rounded-3xl p-6 flex flex-col justify-between shadow-2xl relative overflow-hidden transition-all duration-300 border ${
+            className={`bg-slate-900/80 backdrop-blur-md text-white rounded-3xl p-6 flex flex-col justify-between shadow-2xl relative overflow-hidden transition-all duration-300 border ${
               plan.featured
-                ? 'border-indigo-500 shadow-indigo-500/20 scale-[1.02] ring-2 ring-indigo-500/50'
-                : 'border-slate-800 hover:border-slate-700'
+                ? 'border-indigo-500/50 shadow-indigo-500/20 scale-[1.02] ring-1 ring-indigo-500/50'
+                : 'border-indigo-500/20 hover:border-indigo-400/40'
             }`}
           >
             {/* Top Badge */}
@@ -125,12 +124,12 @@ export default function PricingPage() {
             {/* Plan Info */}
             <div>
               <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
-              <p className="text-[11px] text-slate-400 mb-6 leading-tight min-h-[28px]">
+              <p className="text-[11px] text-slate-300 mb-6 leading-tight min-h-[28px]">
                 {plan.subtitle}
               </p>
 
               {/* Price Tag */}
-              <div className="mb-6 pb-6 border-b border-slate-800">
+              <div className="mb-6 pb-6 border-b border-indigo-500/20">
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-black text-white">{plan.price}</span>
                   <span className="text-xs text-slate-400 font-medium">{plan.period}</span>
@@ -139,7 +138,7 @@ export default function PricingPage() {
 
               {/* Features List */}
               <div className="space-y-2.5 mb-8">
-                <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider block">
+                <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider block">
                   Features Included:
                 </span>
                 {plan.features.map((feat, i) => (
@@ -154,10 +153,10 @@ export default function PricingPage() {
             {/* Action CTA Button */}
             <Link
               to="/register"
-              className={`w-full py-3 rounded-2xl text-xs font-bold text-center transition-all ${
+              className={`w-full py-3 rounded-2xl text-xs font-bold text-center transition-all cursor-pointer ${
                 plan.featured
-                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 text-white shadow-lg shadow-indigo-600/30'
-                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+                  ? 'bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 hover:opacity-90 text-slate-950 shadow-lg shadow-cyan-500/20'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
               }`}
             >
               Get Started
@@ -170,9 +169,9 @@ export default function PricingPage() {
       <div className="flex justify-center">
         <Link
           to="/faq"
-          className="px-8 py-3.5 rounded-full bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white text-xs font-bold shadow-xl hover:scale-105 transition-all flex items-center gap-2"
+          className="px-8 py-3.5 rounded-full bg-slate-900/80 backdrop-blur-md border border-indigo-500/30 text-white text-xs font-bold shadow-xl hover:border-indigo-400/50 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
         >
-          <HelpCircle className="w-4 h-4 text-cyan-300" />
+          <HelpCircle className="w-4 h-4 text-cyan-400" />
           <span>Frequently Asked Questions</span>
         </Link>
       </div>
