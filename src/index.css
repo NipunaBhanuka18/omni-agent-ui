@@ -1,41 +1,124 @@
 @import "tailwindcss";
 
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background-color: #060913;
+  color: #f8fafc;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
 @layer utilities {
   .bg-grid-pattern {
-    background-image: radial-gradient(circle at 1px 1px, rgba(99, 102, 241, 0.15) 1px, transparent 0);
+    background-image: radial-gradient(circle at 1px 1px, rgba(99, 102, 241, 0.18) 1px, transparent 0);
     background-size: 32px 32px;
   }
   
   .glass-card {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: rgba(13, 18, 36, 0.75);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5), 0 0 25px 0 rgba(99, 102, 241, 0.12);
   }
 
-  .glass-card-dark {
-    background: rgba(15, 23, 42, 0.75);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+  .glass-card-hover {
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-card-hover:hover {
+    border-color: rgba(168, 85, 247, 0.45);
+    box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.3), 0 0 30px 0 rgba(56, 189, 248, 0.15);
+    transform: translateY(-3px);
+  }
+
+  /* Vibrant Multi-Stop Gradient Text Utility */
+  .gradient-text-hero {
+    background: linear-gradient(135deg, #38bdf8 0%, #818cf8 35%, #c084fc 70%, #f472b6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .gradient-text-cyan {
+    background: linear-gradient(135deg, #22d3ee 0%, #818cf8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .gradient-text-fire {
+    background: linear-gradient(135deg, #f43f5e 0%, #fb923c 50%, #facc15 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Unified Dark Multi-Mesh Glowing Background */
+  .bg-gradient-mesh {
+    background-color: #060913;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.18) 0px, transparent 55%),
+      radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.2) 0px, transparent 55%),
+      radial-gradient(at 100% 100%, rgba(244, 114, 182, 0.15) 0px, transparent 55%),
+      radial-gradient(at 0% 100%, rgba(99, 102, 241, 0.18) 0px, transparent 55%),
+      radial-gradient(at 50% 50%, rgba(14, 165, 233, 0.08) 0px, transparent 65%);
+  }
+
+  /* Dynamic Glowing Gradient Button */
+  .btn-gradient-glow {
+    background: linear-gradient(135deg, #38bdf8 0%, #6366f1 50%, #a855f7 100%);
+    color: #060913;
+    font-weight: 800;
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.35);
+    transition: all 0.3s ease;
+  }
+
+  .btn-gradient-glow:hover {
+    background: linear-gradient(135deg, #7dd3fc 0%, #818cf8 50%, #c084fc 100%);
+    box-shadow: 0 0 35px rgba(168, 85, 247, 0.5);
+    transform: translateY(-2px) scale(1.02);
+  }
+
+  /* Hide scrollbars */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 
 @keyframes float {
   0%, 100% {
-    transform: translateY(0px);
+    transform: translateY(0px) rotate(0deg);
   }
   50% {
-    transform: translateY(-10px);
+    transform: translateY(-10px) rotate(0.5deg);
   }
 }
 
 @keyframes pulseGlow {
   0%, 100% {
-    opacity: 0.6;
+    opacity: 0.5;
     transform: scale(1);
   }
   50% {
-    opacity: 0.9;
-    transform: scale(1.05);
+    opacity: 0.95;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -44,62 +127,9 @@
 }
 
 .animate-pulse-glow {
-  animation: pulseGlow 6s ease-in-out infinite;
+  animation: pulseGlow 5s ease-in-out infinite;
 }
 
-/* Dark Mode Global Styles */
-html.dark {
-  color-scheme: dark;
-  background-color: #0b0f19;
-  color: #f8fafc;
-}
-
-html.dark body {
-  background-color: #0b0f19;
-  color: #f8fafc;
-}
-
-html.dark .bg-white {
-  background-color: #1e293b !important;
-  color: #f8fafc !important;
-  border-color: #334155 !important;
-}
-
-html.dark .bg-slate-50 {
-  background-color: #0f172a !important;
-  color: #f8fafc !important;
-  border-color: #334155 !important;
-}
-
-html.dark .text-slate-900,
-html.dark .text-slate-800 {
-  color: #f8fafc !important;
-}
-
-html.dark .text-slate-700,
-html.dark .text-slate-600,
-html.dark .text-slate-500 {
-  color: #cbd5e1 !important;
-}
-
-html.dark .border-slate-200,
-html.dark .border-slate-100 {
-  border-color: #334155 !important;
-}
-
-/* Compact View Global Styles */
-body.compact-view {
-  font-size: 13px;
-}
-
-body.compact-view .p-6 {
-  padding: 1rem !important;
-}
-
-body.compact-view .p-8 {
-  padding: 1.25rem !important;
-}
-
-body.compact-view .space-y-6 > * + * {
-  margin-top: 0.75rem !important;
+.animate-spin-slow {
+  animation: spinSlow 20s linear infinite;
 }

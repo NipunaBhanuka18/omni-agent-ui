@@ -5,7 +5,7 @@ import Footer from '@/components/Footer';
 
 export default function PublicLayout() {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 relative overflow-x-hidden font-sans selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 relative overflow-x-hidden font-sans selection:bg-indigo-500 selection:text-white bg-gradient-mesh">
       {/* Background Organic Wave Gradient Orbs & Curves */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         {/* Top Right Vibrant Wave Glow */}

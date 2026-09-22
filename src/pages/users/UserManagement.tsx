@@ -1,7 +1,5 @@
-import React, { useState } from 'react';
-import { Users, UserPlus, ShieldCheck, Search, Check, Smartphone, MessageSquare, Globe, Mail, Building2, Download, Eye, Edit2, Trash2, Shield, Filter, ChevronLeft, ChevronRight, X, AlertTriangle, RefreshCw, Lock, Clock, MapPin, Laptop } from 'lucide-react';
-import InputField from '@/components/InputField';
-import Button from '@/components/Button';
+import { useState } from 'react';
+import { UserPlus, Search, Download, Eye, Edit2, Trash2, Shield, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import ToastContainer, { type ToastMessage } from '@/components/Toast';
 import { apiClient } from '@/api/apiClient';
 
@@ -24,11 +22,8 @@ export default function UserManagement() {
 
   // Form State
   const [fullName, setFullName] = useState('Jane A. Doe');
-  const [orgName, setOrgName] = useState('Acme Corp');
   const [phone, setPhone] = useState('+94 77 123 4567');
   const [email, setEmail] = useState('jane@acme.com');
-  const [azureId, setAzureId] = useState('52a1e-7b5c-43f1-a1b9-8c9dfa41209e');
-  const [azureVerified, setAzureVerified] = useState(true);
 
   // User Details Profile Edit State (for selectedUserView)
   const [profilePhone, setProfilePhone] = useState('+94 73 5634 567');
@@ -100,12 +95,12 @@ export default function UserManagement() {
         <div className="space-y-6">
           
           {/* Top Actions Bar */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-200 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-900/80 backdrop-blur-md p-4 rounded-3xl border border-indigo-500/20 shadow-xl">
             <button
               onClick={() => setSelectedUserView(null)}
-              className="text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1.5"
+              className="text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4 text-cyan-400" />
               <span>Back to User Directory</span>
             </button>
 
@@ -114,21 +109,21 @@ export default function UserManagement() {
                 onClick={() => {
                   setUserToDelete(selectedUserView);
                 }}
-                className="px-4 py-2 rounded-xl border border-red-300 text-red-600 hover:bg-red-50 text-xs font-bold transition-colors"
+                className="px-4 py-2 rounded-xl border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 text-xs font-bold transition-colors cursor-pointer"
               >
                 Remove User
               </button>
 
               <button
                 onClick={() => addToast('Password reset email sent to user.', 'info')}
-                className="px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold shadow-xs cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-slate-900 border border-indigo-500/30 hover:bg-slate-800 text-slate-200 text-xs font-bold shadow-sm cursor-pointer"
               >
                 Reset Access
               </button>
 
               <button
                 onClick={() => addToast('User account deactivated.', 'info')}
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-xs font-bold shadow-md cursor-pointer"
               >
                 Deactivate User
               </button>
@@ -142,86 +137,86 @@ export default function UserManagement() {
             <div className="lg:col-span-7 space-y-6">
               
               {/* Main Profile Card */}
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+              <div className="bg-slate-900/80 backdrop-blur-md p-6 rounded-3xl border border-indigo-500/20 shadow-xl space-y-6">
                 <div className="flex items-center gap-4">
                   <div className="relative">
-                    <div className="w-16 h-16 rounded-full bg-slate-900 text-cyan-400 text-xl font-black flex items-center justify-center border-2 border-indigo-500 shadow-md">
+                    <div className="w-16 h-16 rounded-full bg-slate-950 text-cyan-400 text-xl font-black flex items-center justify-center border-2 border-indigo-500 shadow-md">
                       {selectedUserView.initials}
                     </div>
-                    <span className="w-4 h-4 rounded-full bg-emerald-500 border-2 border-white absolute bottom-0 right-0" />
+                    <span className="w-4 h-4 rounded-full bg-emerald-400 border-2 border-slate-950 absolute bottom-0 right-0 shadow-sm shadow-emerald-400/50" />
                   </div>
 
                   <div>
-                    <h2 className="text-xl font-black text-slate-900">{selectedUserView.name}</h2>
-                    <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold">
+                    <h2 className="text-xl font-black text-white">{selectedUserView.name}</h2>
+                    <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-cyan-300 text-[10px] font-bold">
                       {selectedUserView.role}
                     </span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-xs pt-4 border-t border-slate-100">
+                <div className="grid grid-cols-2 gap-4 text-xs pt-4 border-t border-indigo-500/10">
                   <div>
                     <span className="text-slate-400 block text-[10px] uppercase">Employee ID</span>
-                    <span className="font-mono font-bold text-slate-800">{selectedUserView.empId}</span>
+                    <span className="font-mono font-bold text-slate-200">{selectedUserView.empId}</span>
                   </div>
                   <div>
                     <span className="text-slate-400 block text-[10px] uppercase">Email</span>
-                    <span className="font-bold text-slate-800 truncate block">{selectedUserView.email}</span>
+                    <span className="font-bold text-slate-200 truncate block">{selectedUserView.email}</span>
                   </div>
                   <div>
                     <span className="text-slate-400 block text-[10px] uppercase">Azure Sync</span>
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold inline-block">
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold inline-block">
                       Active (1min ago)
                     </span>
                   </div>
                   <div>
                     <span className="text-slate-400 block text-[10px] uppercase">Location</span>
-                    <span className="font-bold text-slate-800">{selectedUserView.location}</span>
+                    <span className="font-bold text-slate-200">{selectedUserView.location}</span>
                   </div>
                 </div>
               </div>
 
               {/* Login History */}
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+              <div className="bg-slate-900/80 backdrop-blur-md p-6 rounded-3xl border border-indigo-500/20 shadow-xl space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-slate-900">Login History</h3>
-                  <button className="text-xs font-bold text-indigo-600 hover:underline">Export Log Report</button>
+                  <h3 className="text-sm font-extrabold text-cyan-400 uppercase tracking-wider">Login History</h3>
+                  <button className="text-xs font-bold text-indigo-300 hover:text-white transition-colors cursor-pointer">Export Log Report</button>
                 </div>
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider">
+                      <tr className="border-b border-indigo-500/20 text-slate-400 font-bold uppercase tracking-wider">
                         <th className="pb-2">DATE & TIME</th>
                         <th className="pb-2">LOCATION</th>
                         <th className="pb-2">DEVICE ID</th>
                         <th className="pb-2 text-right">STATUS</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                    <tbody className="divide-y divide-indigo-500/10 font-medium text-slate-300">
                       <tr>
                         <td className="py-2.5">2023-11-24 10:42:02 AM</td>
                         <td className="py-2.5">Colombo, SL</td>
                         <td className="py-2.5 font-mono text-[11px] text-slate-400">UR-FR-02-MAC-XX</td>
-                        <td className="py-2.5 text-right font-bold text-emerald-600">Success</td>
+                        <td className="py-2.5 text-right font-bold text-emerald-400">Success</td>
                       </tr>
                       <tr>
                         <td className="py-2.5">2023-11-23 09:12:00 PM</td>
                         <td className="py-2.5">Kandy, SL</td>
                         <td className="py-2.5 font-mono text-[11px] text-slate-400">UR-FR-02-WIN-XX</td>
-                        <td className="py-2.5 text-right font-bold text-emerald-600">Success</td>
+                        <td className="py-2.5 text-right font-bold text-emerald-400">Success</td>
                       </tr>
                       <tr>
                         <td className="py-2.5">2023-11-22 03:33:10 AM</td>
-                        <td className="py-2.5 text-red-600">Unrecognized</td>
+                        <td className="py-2.5 text-rose-400">Unrecognized</td>
                         <td className="py-2.5 font-mono text-[11px] text-slate-400">UR-FR-02-UNK-XX</td>
-                        <td className="py-2.5 text-right font-bold text-red-600">Blocked</td>
+                        <td className="py-2.5 text-right font-bold text-rose-400">Blocked</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
 
-                <button className="text-xs font-bold text-slate-500 hover:text-slate-800 block text-center w-full pt-2">
+                <button className="text-xs font-bold text-slate-400 hover:text-white block text-center w-full pt-2 transition-colors cursor-pointer">
                   View All Logs
                 </button>
               </div>
@@ -233,93 +228,93 @@ export default function UserManagement() {
               
               {/* Account Metadata & Azure Sync Management */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-2">
-                  <span className="text-[10px] font-bold uppercase text-slate-400">ACCOUNT METADATA</span>
-                  <div className="text-xs text-slate-700">
+                <div className="bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-indigo-500/20 shadow-xl space-y-2">
+                  <span className="text-[10px] font-extrabold uppercase text-slate-400">ACCOUNT METADATA</span>
+                  <div className="text-xs text-slate-300">
                     <p><span className="text-slate-400">Created On:</span> Oct 12, 2021</p>
                     <p><span className="text-slate-400">Last Password Change:</span> 14 days ago</p>
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-5 rounded-3xl border border-indigo-100 shadow-sm space-y-2">
-                  <span className="text-[10px] font-bold uppercase text-indigo-900">Azure Sync Management</span>
+                <div className="bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-indigo-500/30 shadow-xl space-y-2">
+                  <span className="text-[10px] font-extrabold uppercase text-cyan-300">Azure Sync Management</span>
                   <div className="flex items-center justify-between pt-1">
-                    <span className="text-xs font-bold text-slate-800">Azure Auth</span>
+                    <span className="text-xs font-bold text-slate-200">Azure Auth</span>
                     <input
                       type="checkbox"
                       checked={permissions.azureAuth}
                       onChange={(e) => setPermissions({ ...permissions, azureAuth: e.target.checked })}
-                      className="w-4 h-4 text-indigo-600 rounded"
+                      className="w-4 h-4 text-cyan-500 rounded bg-slate-950 border-indigo-500/30 accent-cyan-500"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Permissions List */}
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-                <h3 className="text-sm font-bold text-slate-900">Permissions</h3>
+              <div className="bg-slate-900/80 backdrop-blur-md p-6 rounded-3xl border border-indigo-500/20 shadow-xl space-y-4">
+                <h3 className="text-sm font-extrabold text-white">Permissions</h3>
 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/60 border border-indigo-500/10">
                     <div>
-                      <span className="text-xs font-bold text-slate-800 block">Profile Settings</span>
+                      <span className="text-xs font-bold text-slate-200 block">Profile Settings</span>
                       <span className="text-[10px] text-slate-400">Create and delete system tokens</span>
                     </div>
                     <input
                       type="checkbox"
                       checked={permissions.profile}
                       onChange={(e) => setPermissions({ ...permissions, profile: e.target.checked })}
-                      className="w-4 h-4 text-indigo-600 rounded"
+                      className="w-4 h-4 rounded accent-cyan-500"
                     />
                   </div>
 
-                  <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/60 border border-indigo-500/10">
                     <div>
-                      <span className="text-xs font-bold text-slate-800 block">View Analytics</span>
+                      <span className="text-xs font-bold text-slate-200 block">View Analytics</span>
                       <span className="text-[10px] text-slate-400">Access usage data dashboards</span>
                     </div>
                     <input
                       type="checkbox"
                       checked={permissions.analytics}
                       onChange={(e) => setPermissions({ ...permissions, analytics: e.target.checked })}
-                      className="w-4 h-4 text-indigo-600 rounded"
+                      className="w-4 h-4 rounded accent-cyan-500"
                     />
                   </div>
 
-                  <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/60 border border-indigo-500/10">
                     <div>
-                      <span className="text-xs font-bold text-slate-800 block">Configure {activeTab.toUpperCase()} Channel</span>
+                      <span className="text-xs font-bold text-slate-200 block">Configure {activeTab.toUpperCase()} Channel</span>
                       <span className="text-[10px] text-slate-400">Edit routing and load balancing</span>
                     </div>
                     <input
                       type="checkbox"
                       checked={permissions.channel}
                       onChange={(e) => setPermissions({ ...permissions, channel: e.target.checked })}
-                      className="w-4 h-4 text-indigo-600 rounded"
+                      className="w-4 h-4 rounded accent-cyan-500"
                     />
                   </div>
                 </div>
 
                 <div className="pt-2">
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Connected Contact Phone</label>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">Connected Contact Phone</label>
                   <input
                     type="text"
                     value={profilePhone}
                     onChange={(e) => setProfilePhone(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-indigo-600 focus:outline-none"
+                    className="w-full px-3.5 py-2 bg-slate-950 border border-indigo-500/30 rounded-xl text-xs font-bold text-cyan-400 focus:outline-none focus:border-cyan-400"
                   />
                 </div>
               </div>
 
               {/* Roles Management & Session Actions */}
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-                <h3 className="text-sm font-bold text-slate-900">Roles Management</h3>
+              <div className="bg-slate-900/80 backdrop-blur-md p-6 rounded-3xl border border-indigo-500/20 shadow-xl space-y-4">
+                <h3 className="text-sm font-extrabold text-white">Roles Management</h3>
 
                 <div className="grid grid-cols-2 gap-3">
                   <label
                     onClick={() => setSelectedRole('employee')}
                     className={`p-3 rounded-2xl border text-xs font-bold cursor-pointer transition-all ${
-                      selectedRole === 'employee' ? 'bg-indigo-50 border-indigo-500 text-indigo-900' : 'bg-slate-50 border-slate-200 text-slate-600'
+                      selectedRole === 'employee' ? 'bg-indigo-500/20 border-indigo-400 text-cyan-300' : 'bg-slate-950/60 border-indigo-500/10 text-slate-400 hover:border-indigo-500/30'
                     }`}
                   >
                     <span className="block font-bold">Internal Employee User</span>
@@ -329,7 +324,7 @@ export default function UserManagement() {
                   <label
                     onClick={() => setSelectedRole('customer')}
                     className={`p-3 rounded-2xl border text-xs font-bold cursor-pointer transition-all ${
-                      selectedRole === 'customer' ? 'bg-indigo-50 border-indigo-500 text-indigo-900' : 'bg-slate-50 border-slate-200 text-slate-600'
+                      selectedRole === 'customer' ? 'bg-indigo-500/20 border-indigo-400 text-cyan-300' : 'bg-slate-950/60 border-indigo-500/10 text-slate-400 hover:border-indigo-500/30'
                     }`}
                   >
                     <span className="block font-bold">External Customer User</span>
@@ -337,11 +332,11 @@ export default function UserManagement() {
                   </label>
                 </div>
 
-                <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                <div className="flex items-center justify-between gap-3 pt-4 border-t border-indigo-500/10">
                   <button
                     type="button"
                     onClick={() => addToast('Active user session terminated.', 'info')}
-                    className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs shadow-md cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs shadow-md cursor-pointer transition-all"
                   >
                     Session Terminate This User
                   </button>
@@ -349,7 +344,7 @@ export default function UserManagement() {
                   <button
                     type="button"
                     onClick={() => addToast('User Changes Saved Successfully!', 'success')}
-                    className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md cursor-pointer"
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-md cursor-pointer transition-all"
                   >
                     Update Changes
                   </button>
@@ -368,33 +363,33 @@ export default function UserManagement() {
           {/* Top Header & Export Action */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">User Management</h1>
-              <p className="text-xs text-slate-500 mt-0.5">Manage customer profiles, details, and interactions from one centralized workspace.</p>
+              <h1 className="text-2xl font-black text-white tracking-tight">User Management</h1>
+              <p className="text-xs text-slate-400 mt-0.5">Manage customer profiles, details, and interactions from one centralized workspace.</p>
             </div>
 
             <div className="flex items-center gap-3">
               <button
                 onClick={() => addToast('Exporting user directory report...', 'info')}
-                className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold shadow-xs flex items-center gap-2 cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-indigo-500/30 text-xs font-bold shadow-md flex items-center gap-2 cursor-pointer transition-all"
               >
-                <Download className="w-4 h-4 text-indigo-600" />
+                <Download className="w-4 h-4 text-cyan-400" />
                 <span>Export List Report</span>
               </button>
             </div>
           </div>
 
           {/* Channel Switcher Tabs */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
+          <div className="flex flex-wrap items-center gap-2 border-b border-indigo-500/10 pb-3">
             {(['whatsapp', 'messenger', 'sms', 'email', 'web'] as const).map((ch) => {
               const active = activeTab === ch;
               return (
                 <button
                   key={ch}
                   onClick={() => setActiveTab(ch)}
-                  className={`px-5 py-2.5 rounded-2xl text-xs font-bold transition-all capitalize ${
+                  className={`px-5 py-2.5 rounded-2xl text-xs font-bold transition-all capitalize cursor-pointer ${
                     active
-                      ? 'bg-emerald-500 text-white shadow-md'
-                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/20'
+                      : 'bg-slate-900/60 text-slate-400 border border-indigo-500/20 hover:bg-slate-800 hover:text-white'
                   }`}
                 >
                   {ch} Users
@@ -405,35 +400,35 @@ export default function UserManagement() {
 
           {/* Registration Requests Pill (for Messenger/SMS/Email tabs) */}
           {(activeTab === 'messenger' || activeTab === 'sms' || activeTab === 'email' || activeTab === 'web') && (
-            <div className="p-3 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center gap-3">
-              <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-ping" />
-              <span className="text-xs font-bold text-indigo-900">Registration Requests</span>
+            <div className="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center gap-3">
+              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+              <span className="text-xs font-bold text-cyan-300">Registration Requests</span>
               <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white text-[10px] font-black">12</span>
             </div>
           )}
 
           {/* Create User Toggle Bar */}
           <div className="flex items-center justify-between">
-            <div className="px-4 py-2 rounded-2xl bg-emerald-100 text-emerald-900 text-xs font-bold flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-600" />
+            <div className="px-4 py-2 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50" />
               <span>Active Users ({currentUsers.length})</span>
             </div>
 
             <button
               onClick={() => setShowCreateForm(!showCreateForm)}
-              className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md flex items-center gap-2"
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-500/20 flex items-center gap-2 cursor-pointer transition-all"
             >
-              <UserPlus className="w-4 h-4" />
+              <UserPlus className="w-4 h-4 text-cyan-300" />
               <span>{showCreateForm ? 'Close Form' : 'Invite Live Agent'}</span>
             </button>
           </div>
 
           {/* Create / Invite Live Agent Form Card */}
           {showCreateForm && (
-            <div className="bg-white p-6 rounded-3xl border border-indigo-200 shadow-lg space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="text-sm font-bold text-slate-900">Invite New Live Agent (`POST /tenants/agents/invite`)</h3>
-                <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold">Cognito Group: live_agent</span>
+            <div className="bg-slate-900/90 backdrop-blur-md p-6 rounded-3xl border border-indigo-500/30 shadow-xl space-y-4">
+              <div className="flex items-center justify-between border-b border-indigo-500/10 pb-3">
+                <h3 className="text-sm font-extrabold text-white">Invite New Live Agent (`POST /tenants/agents/invite`)</h3>
+                <span className="px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-[10px] font-bold">Cognito Group: live_agent</span>
               </div>
 
               <form
@@ -455,41 +450,41 @@ export default function UserManagement() {
                 className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs"
               >
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Full Name</label>
+                  <label className="font-bold text-slate-300 block mb-1">Full Name</label>
                   <input
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs"
+                    className="w-full px-3.5 py-2 bg-slate-950 border border-indigo-500/30 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-cyan-400"
                     required
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Work Email</label>
+                  <label className="font-bold text-slate-300 block mb-1">Work Email</label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs"
+                    className="w-full px-3.5 py-2 bg-slate-950 border border-indigo-500/30 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-cyan-400"
                     required
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Phone Number</label>
+                  <label className="font-bold text-slate-300 block mb-1">Phone Number</label>
                   <input
                     type="text"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs"
+                    className="w-full px-3.5 py-2 bg-slate-950 border border-indigo-500/30 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-cyan-400"
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Assigned Role</label>
+                  <label className="font-bold text-slate-300 block mb-1">Assigned Role</label>
                   <input
                     type="text"
                     value="live_agent"
                     disabled
-                    className="w-full px-3.5 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-purple-700"
+                    className="w-full px-3.5 py-2 bg-slate-950 border border-indigo-500/30 rounded-xl text-xs font-bold text-cyan-400"
                   />
                 </div>
 
@@ -497,13 +492,13 @@ export default function UserManagement() {
                   <button
                     type="button"
                     onClick={() => setShowCreateForm(false)}
-                    className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-bold"
+                    className="px-4 py-2 rounded-xl border border-indigo-500/30 text-slate-300 font-bold hover:bg-slate-800 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-md"
+                    className="px-6 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold shadow-md transition-all"
                   >
                     Send Invitation
                   </button>
@@ -513,7 +508,7 @@ export default function UserManagement() {
           )}
 
           {/* Directory Table */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+          <div className="bg-slate-900/80 backdrop-blur-md p-6 rounded-3xl border border-indigo-500/20 shadow-xl space-y-4">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="relative flex-1 w-full max-w-md">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
@@ -522,19 +517,19 @@ export default function UserManagement() {
                   placeholder="Filter by name, email or role..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-indigo-500/30 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-cyan-400"
                 />
               </div>
 
               <div className="flex items-center gap-3 w-full sm:w-auto">
-                <select className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none">
+                <select className="px-4 py-2 bg-slate-950 border border-indigo-500/30 rounded-xl text-xs font-bold text-slate-300 focus:outline-none">
                   <option>All Roles</option>
                   <option>External Customer</option>
                   <option>Admin</option>
                 </select>
 
-                <button className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center gap-1.5">
-                  <Filter className="w-3.5 h-3.5" />
+                <button className="px-4 py-2 bg-slate-950 border border-indigo-500/30 rounded-xl text-xs font-bold text-slate-300 hover:bg-slate-800 flex items-center gap-1.5 transition-colors cursor-pointer">
+                  <Filter className="w-3.5 h-3.5 text-cyan-400" />
                   <span>More Filters</span>
                 </button>
               </div>
@@ -543,7 +538,7 @@ export default function UserManagement() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="bg-indigo-50/70 border-y border-indigo-100 text-indigo-900 font-bold uppercase tracking-wider">
+                  <tr className="bg-indigo-500/10 border-y border-indigo-500/20 text-cyan-300 font-extrabold uppercase tracking-wider">
                     <th className="py-3 px-4">User Identity</th>
                     <th className="py-3 px-4">Role</th>
                     <th className="py-3 px-4">Status</th>
@@ -551,53 +546,53 @@ export default function UserManagement() {
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                <tbody className="divide-y divide-indigo-500/10 font-medium text-slate-300">
                   {currentUsers.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-50">
+                    <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-2xl bg-indigo-100 text-indigo-700 font-black flex items-center justify-center text-xs shrink-0 shadow-xs">
+                          <div className="w-9 h-9 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 text-cyan-300 font-black flex items-center justify-center text-xs shrink-0 shadow-sm">
                             {u.initials}
                           </div>
                           <div>
-                            <span className="font-bold text-slate-900 block">{u.name}</span>
+                            <span className="font-bold text-white block">{u.name}</span>
                             <span className="text-[11px] text-slate-400">{u.email}</span>
                           </div>
                         </div>
                       </td>
 
-                      <td className="py-4 px-4 font-semibold text-slate-600">{u.role}</td>
+                      <td className="py-4 px-4 font-semibold text-slate-300">{u.role}</td>
 
                       <td className="py-4 px-4">
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 w-fit ${
-                          u.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                          u.status === 'ACTIVE' ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400' : 'bg-rose-500/10 border border-rose-500/30 text-rose-400'
                         }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${u.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full ${u.status === 'ACTIVE' ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50' : 'bg-rose-400'}`} />
                           {u.status}
                         </span>
                       </td>
 
-                      <td className="py-4 px-4 text-slate-500 font-normal">{u.lastLogin}</td>
+                      <td className="py-4 px-4 text-slate-400 font-normal">{u.lastLogin}</td>
 
                       <td className="py-4 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => setSelectedUserView(u)}
-                            className="p-2 rounded-xl text-blue-600 hover:bg-blue-50 transition-colors"
+                            className="p-2 rounded-xl text-cyan-400 hover:bg-cyan-500/10 transition-colors cursor-pointer"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
 
                           <button
                             onClick={() => setSelectedUserView(u)}
-                            className="p-2 rounded-xl text-indigo-600 hover:bg-indigo-50 transition-colors"
+                            className="p-2 rounded-xl text-indigo-400 hover:bg-indigo-500/10 transition-colors cursor-pointer"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
 
                           <button
                             onClick={() => setUserToDelete(u)}
-                            className="p-2 rounded-xl text-red-600 hover:bg-red-50 transition-colors"
+                            className="p-2 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -609,14 +604,14 @@ export default function UserManagement() {
               </table>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-xs text-slate-500">
+            <div className="flex items-center justify-between pt-4 border-t border-indigo-500/10 text-xs text-slate-400">
               <span>Showing 1-3 of {channelStats[activeTab].total} active users</span>
               <div className="flex items-center gap-2">
-                <button className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50">
-                  <ChevronLeft className="w-4 h-4 text-slate-600" />
+                <button className="p-2 rounded-xl border border-indigo-500/30 hover:bg-slate-800 transition-colors text-slate-300">
+                  <ChevronLeft className="w-4 h-4" />
                 </button>
-                <button className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50">
-                  <ChevronRight className="w-4 h-4 text-slate-600" />
+                <button className="p-2 rounded-xl border border-indigo-500/30 hover:bg-slate-800 transition-colors text-slate-300">
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -624,36 +619,36 @@ export default function UserManagement() {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">TOTAL USERS</span>
+            <div className="bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-indigo-500/20 shadow-xl">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-1">TOTAL USERS</span>
               <div className="flex items-baseline justify-between">
-                <h2 className="text-2xl font-black text-slate-900">{channelStats[activeTab].total}</h2>
-                <span className="text-xs font-bold text-emerald-600">+12%</span>
+                <h2 className="text-2xl font-black text-white">{channelStats[activeTab].total}</h2>
+                <span className="text-xs font-bold text-emerald-400">+12%</span>
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">ACTIVE NOW</span>
+            <div className="bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-indigo-500/20 shadow-xl">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-1">ACTIVE NOW</span>
               <div className="flex items-baseline justify-between">
-                <h2 className="text-2xl font-black text-slate-900">{channelStats[activeTab].active}</h2>
+                <h2 className="text-2xl font-black text-white">{channelStats[activeTab].active}</h2>
                 <span className="text-xs font-semibold text-slate-400">On duty</span>
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">AVG. APPROVAL TIME</span>
+            <div className="bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-indigo-500/20 shadow-xl">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-1">AVG. APPROVAL TIME</span>
               <div className="flex items-baseline justify-between">
-                <h2 className="text-2xl font-black text-slate-900">{channelStats[activeTab].approval}</h2>
-                <span className="text-xs font-semibold text-emerald-600">-2h trend</span>
+                <h2 className="text-2xl font-black text-white">{channelStats[activeTab].approval}</h2>
+                <span className="text-xs font-semibold text-emerald-400">-2h trend</span>
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div className="bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-indigo-500/20 shadow-xl flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">SECURITY HEALTH</span>
-                <h2 className="text-lg font-black text-emerald-600">Optimal</h2>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-1">SECURITY HEALTH</span>
+                <h2 className="text-lg font-black text-emerald-400">Optimal</h2>
               </div>
-              <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-600">
+              <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
                 <Shield className="w-6 h-6" />
               </div>
             </div>
@@ -664,16 +659,16 @@ export default function UserManagement() {
 
       {/* Delete User Modal */}
       {userToDelete && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full border border-slate-200 shadow-2xl text-center space-y-6 relative overflow-hidden">
-            <div className="w-20 h-20 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto ring-8 ring-red-50">
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 rounded-3xl p-8 max-w-md w-full border border-indigo-500/30 shadow-2xl text-center space-y-6 relative overflow-hidden">
+            <div className="w-20 h-20 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto ring-8 ring-rose-500/5">
               <Trash2 className="w-10 h-10" />
             </div>
 
             <div className="space-y-2">
-              <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">DELETE USER</h3>
-              <p className="text-xs text-slate-500 font-medium max-w-xs mx-auto">
-                Do you really want to delete this user <span className="font-bold text-slate-800">({userToDelete.name})</span>? This process can not be undone.
+              <h3 className="text-xl font-black text-white uppercase tracking-tight">DELETE USER</h3>
+              <p className="text-xs text-slate-400 font-medium max-w-xs mx-auto">
+                Do you really want to delete this user <span className="font-bold text-cyan-300">({userToDelete.name})</span>? This process can not be undone.
               </p>
             </div>
 
@@ -681,7 +676,7 @@ export default function UserManagement() {
               <button
                 type="button"
                 onClick={() => setUserToDelete(null)}
-                className="px-8 py-3 rounded-xl border border-red-300 text-red-600 font-bold text-xs hover:bg-red-50 transition-colors"
+                className="px-8 py-3 rounded-xl border border-indigo-500/30 text-slate-300 font-bold text-xs hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 CANCEL
               </button>
@@ -689,7 +684,7 @@ export default function UserManagement() {
               <button
                 type="button"
                 onClick={handleDeleteConfirm}
-                className="px-8 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md transition-all"
+                className="px-8 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-bold text-xs shadow-lg shadow-rose-500/20 transition-all cursor-pointer"
               >
                 DELETE
               </button>

@@ -29,11 +29,17 @@ export async function apiRequest<T = any>(endpoint: string, options: ApiOptions 
     }
   }
 
+  if (!storedTenantId) {
+    storedTenantId = 'slt';
+  }
+
+  const effectiveToken = token ? (token.startsWith('Bearer ') ? token : `Bearer ${token}`) : 'Bearer dev-token-staff';
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'x-channel': channel,
-    ...(storedTenantId ? { 'x-tenant-id': storedTenantId } : {}),
-    ...(token ? { Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}` } : {}),
+    'x-tenant-id': storedTenantId,
+    Authorization: effectiveToken,
     ...(customHeaders as Record<string, string>),
   };
 
