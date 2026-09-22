@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react';
+import { useParams } from 'react-router-dom';
 import { Bot, Send, User, Headset, CheckCircle2, ShieldCheck, RefreshCw, AlertCircle, FileText } from 'lucide-react';
 import { apiClient } from '@/api/apiClient';
 
@@ -302,7 +302,7 @@ export default function HostedChatWidget() {
                             {f.type === 'select' ? (
                               <select
                                 onChange={(e) => setFormValues({ ...formValues, [f.id]: e.target.value })}
-                                className="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs"
+                                className="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900"
                                 required={f.required}
                               >
                                 <option value="">Select option...</option>
@@ -316,7 +316,7 @@ export default function HostedChatWidget() {
                               <input
                                 type={f.type}
                                 onChange={(e) => setFormValues({ ...formValues, [f.id]: e.target.value })}
-                                className="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs"
+                                className="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400"
                                 required={f.required}
                               />
                             )}
@@ -362,7 +362,7 @@ export default function HostedChatWidget() {
             placeholder="Type your message or ask a question..."
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
           />
           <button
             type="submit"
