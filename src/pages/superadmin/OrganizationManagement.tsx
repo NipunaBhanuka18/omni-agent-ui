@@ -42,14 +42,20 @@ export default function OrganizationManagement() {
   const fetchRequests = async () => {
     setLoadingRequests(true);
     try {
+      const rawToken = (typeof window !== 'undefined' && localStorage.getItem('omni_token')) || '';
+      const authHeader = rawToken ? (rawToken.startsWith('Bearer ') ? rawToken : `Bearer ${rawToken}`) : '';
+      const headers: Record<string, string> = authHeader ? { Authorization: authHeader } : {};
+
       // Fetch pending requests
-      const resPending = await fetch(`${API}/api/registrations?status=pending`);
+      const resPending = await fetch(`${API}/api/registrations?status=pending`, { headers });
       const pendingData = await resPending.json();
-      setRequestsList(Array.isArray(pendingData) ? pendingData : []);
+      const pendingList = Array.isArray(pendingData) ? pendingData : (pendingData.registrations || []);
+      setRequestsList(pendingList);
 
       // Fetch approved registrations & add to active companies
-      const resApproved = await fetch(`${API}/api/registrations?status=approved`);
+      const resApproved = await fetch(`${API}/api/registrations?status=approved`, { headers });
       const approvedData = await resApproved.json();
+      const approvedList = Array.isArray(approvedData) ? approvedData : (approvedData.registrations || []);
 
       const freshCompanies: Record<string, any[]> = {
         tech: [],
@@ -60,8 +66,8 @@ export default function OrganizationManagement() {
         other: [],
       };
 
-      if (Array.isArray(approvedData) && approvedData.length > 0) {
-        approvedData.forEach((req: any) => {
+      if (Array.isArray(approvedList) && approvedList.length > 0) {
+        approvedList.forEach((req: any) => {
           const rawInd = (req.industry || req.companyType || 'tech').toLowerCase();
           let targetTab = 'tech';
           if (rawInd.includes('finance')) targetTab = 'finance';
@@ -103,10 +109,15 @@ export default function OrganizationManagement() {
 
   const handleApprove = async (id: number, req: any) => {
     const companyName = req.companyName || req.name;
+    const rawToken = (typeof window !== 'undefined' && localStorage.getItem('omni_token')) || '';
+    const authHeader = rawToken ? (rawToken.startsWith('Bearer ') ? rawToken : `Bearer ${rawToken}`) : '';
     try {
       await fetch(`${API}/api/registrations/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authHeader ? { Authorization: authHeader } : {}),
+        },
         body: JSON.stringify({ status: 'approved' }),
       });
     } catch {
