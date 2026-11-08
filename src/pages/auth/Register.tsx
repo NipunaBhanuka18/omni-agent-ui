@@ -129,10 +129,14 @@ export default function Register() {
           adminEmail: formData.adminEmail,
           adminPhone: formData.adminPhone,
           industry: formData.companyType,
-          // password intentionally excluded
+          password: formData.password,
         }),
       });
-      if (!res.ok) throw new Error('Server error');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        addToast(data.error || data.message || 'Registration failed. Please check your details.', 'error');
+        return;
+      }
       navigate('/register-success');
     } catch {
       addToast('Could not connect to server. Please make sure the backend is running.', 'error');
