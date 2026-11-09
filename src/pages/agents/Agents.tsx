@@ -96,7 +96,7 @@ export default function Agents() {
         try {
           const u = JSON.parse(userJson);
           tenantId = u.tenantId || u['custom:tenant_id'] || 'slt';
-        } catch {}
+        } catch { }
       }
 
       await fetch('http://localhost:3001/api/dev/admin/agents', {
@@ -160,23 +160,46 @@ export default function Agents() {
     email: { name: 'Omni Email Agent v.2.4', status: 'Online', model: 'SLT-LLM-v2.4' },
   };
 
-  const handleSendMessage = async (e: React.FormEvent, intentOverride?: string) => {
+  const handleSendMessage = async (e: React.FormEvent, intentOverride?: string, customText?: string) => {
     if (e) e.preventDefault();
-    const intentToRun = intentOverride || 'check_balance';
-    const textToSend = inputMessage.trim() || `Run Intent: ${intentToRun}`;
+    const textToSend = (customText || inputMessage).trim();
     if (!textToSend && !intentOverride) return;
 
-    const userMsg = { id: Date.now(), sender: 'user', text: textToSend };
+    let intentToRun = intentOverride;
+    if (!intentToRun) {
+      const lower = textToSend.toLowerCase();
+      if (lower.includes('usage') || lower.includes('data') || lower.includes('gb') || lower.includes('package')) {
+        intentToRun = 'check_usage';
+      } else if (lower.includes('router') || lower.includes('internet') || lower.includes('slow') || lower.includes('troubleshoot') || lower.includes('wifi') || lower.includes('light') || lower.includes('los')) {
+        intentToRun = 'troubleshoot_router';
+      } else if (lower.includes('pay') || lower.includes('payment')) {
+        intentToRun = 'pay_bill';
+      } else {
+        intentToRun = 'check_balance';
+      }
+    }
+
+    const userMsg = { id: Date.now(), sender: 'user', text: textToSend || `Run: ${intentToRun}` };
     setMessages((prev) => [...prev, userMsg]);
     setInputMessage('');
 
     try {
+      const token = localStorage.getItem('omni_token') || 'dev-token-staff';
+      const userJson = localStorage.getItem('omni_user');
+      let tenantId = 'slt';
+      if (userJson) {
+        try {
+          const u = JSON.parse(userJson);
+          tenantId = u.tenantId || u['custom:tenant_id'] || 'slt';
+        } catch {}
+      }
+
       const res = await fetch('http://localhost:3001/api/agent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer dev-token-staff',
-          'x-tenant-id': 'dev-tenant-local',
+          'Authorization': token.startsWith('Bearer ') ? token : `Bearer ${token}`,
+          'x-tenant-id': tenantId,
           'x-channel': activeChannelTab,
         },
         body: JSON.stringify({
@@ -189,18 +212,21 @@ export default function Agents() {
       if (resData.success) {
         let replyStr = `[Backend Agent ${agentConfigByChannel[activeChannelTab].name}]: Intent '${intentToRun}' executed successfully.`;
         if (intentToRun === 'check_balance') {
-          replyStr = `[Billing Agent]: Balance is ${resData.data?.currentBalance || 'LKR 3,450.00'}. Due Date: ${resData.data?.dueDate || '2026-09-28'}.`;
+          const bal = resData.data?.balance !== undefined ? resData.data.balance : resData.data?.currentBalance;
+          replyStr = `[Billing Specialist]: Account ${resData.data?.accountNumber || 'SLT-9982-555'} balance is ${resData.data?.currency || 'LKR'} ${bal}. Due Date: ${resData.data?.dueDate || '2026-09-15'}.`;
         } else if (intentToRun === 'pay_bill') {
-          replyStr = `[Billing Agent]: Payment confirmed! Transaction ID: ${resData.data?.transactionId || 'TXN-88219482'}.`;
+          replyStr = `[Billing Specialist]: Payment confirmed! Transaction ID: ${resData.data?.transactionId || 'TXN-88219482'}.`;
         } else if (intentToRun === 'check_usage') {
-          replyStr = `[Usage Agent]: Used ${resData.data?.usedDataGB || '68.4'} GB of ${resData.data?.totalDataGB || '100'} GB. Voice: ${resData.data?.voiceMinutesUsed || '420'} mins.`;
+          const used = resData.data?.dataUsedGb !== undefined ? resData.data.dataUsedGb : resData.data?.usedDataGB;
+          const total = resData.data?.dataTotalGb !== undefined ? resData.data.dataTotalGb : resData.data?.totalDataGB;
+          replyStr = `[Usage Specialist]: Used ${used || '45.2'} GB of ${total || '100'} GB (${resData.data?.packageName || 'Unlimited Data Pro'}). Voice: ${resData.data?.voiceUsedMins || resData.data?.voiceMinutesUsed || '150'} mins.`;
         } else if (intentToRun === 'troubleshoot_router') {
-          replyStr = `[Support Agent RAG]: Solution: ${resData.data?.result?.title || 'Power cycle router and check LAN cabling.'}`;
+          replyStr = `[Support Specialist RAG]:\n${typeof resData.data?.result === 'string' ? resData.data.result : (resData.data?.result?.title || 'Power cycle router and check LAN cabling.')}`;
         }
 
         setMessages((prev) => [...prev, { id: Date.now() + 1, sender: 'bot', text: replyStr }]);
       } else {
-        setMessages((prev) => [...prev, { id: Date.now() + 1, sender: 'bot', text: `⚠️ Agent Error: ${resData.error?.message || 'Action failed'}` }]);
+        setMessages((prev) => [...prev, { id: Date.now() + 1, sender: 'bot', text: `⚠️ Agent Error: ${resData.error?.message || resData.error || 'Action failed'}` }]);
       }
     } catch {
       setMessages((prev) => [
@@ -216,7 +242,7 @@ export default function Agents() {
 
   return (
     <div className="space-y-6 font-sans">
-      
+
       {/* 1. If No Organization Selected -> Show Organization Selector Grid (Matching Image 3 Top) */}
       {!selectedOrg ? (
         <div className="space-y-6">
@@ -243,7 +269,7 @@ export default function Agents() {
       ) : (
         /* 2. Super Admin AI Agent Management View (Matching Images 3, 4, 5) */
         <div className="space-y-6">
-          
+
           {/* Top Banner with Selected Org Header Badge */}
           <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 rounded-3xl shadow-xl border border-indigo-900/50 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
@@ -276,41 +302,37 @@ export default function Agents() {
           <div className="flex flex-wrap items-center gap-3 bg-white p-2 rounded-2xl border border-slate-200 shadow-xs">
             <button
               onClick={() => setActiveChannelTab('whatsapp')}
-              className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                activeChannelTab === 'whatsapp'
+              className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${activeChannelTab === 'whatsapp'
                   ? 'bg-purple-900 text-white shadow-md'
                   : 'text-slate-600 hover:bg-slate-50'
-              }`}
+                }`}
             >
               Whatsapp Agent
             </button>
             <button
               onClick={() => setActiveChannelTab('messenger')}
-              className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                activeChannelTab === 'messenger'
+              className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${activeChannelTab === 'messenger'
                   ? 'bg-purple-900 text-white shadow-md'
                   : 'text-slate-600 hover:bg-slate-50'
-              }`}
+                }`}
             >
               Messenger Agent
             </button>
             <button
               onClick={() => setActiveChannelTab('sms')}
-              className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                activeChannelTab === 'sms'
+              className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${activeChannelTab === 'sms'
                   ? 'bg-purple-900 text-white shadow-md'
                   : 'text-slate-600 hover:bg-slate-50'
-              }`}
+                }`}
             >
               SMS Agent
             </button>
             <button
               onClick={() => setActiveChannelTab('email')}
-              className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                activeChannelTab === 'email'
+              className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all ${activeChannelTab === 'email'
                   ? 'bg-purple-900 text-white shadow-md'
                   : 'text-slate-600 hover:bg-slate-50'
-              }`}
+                }`}
             >
               Email Agent
             </button>
@@ -341,7 +363,7 @@ export default function Agents() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              
+
               {/* Nexus-1 Support Bot Card */}
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
                 <div className="flex items-start justify-between">
@@ -442,7 +464,7 @@ export default function Agents() {
 
           {/* System Runtime Logs & Base Model Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            
+
             {/* System Runtime Logs Terminal (8 cols) */}
             <div className="lg:col-span-8 bg-slate-900 text-slate-200 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -472,9 +494,8 @@ export default function Agents() {
               <div className="space-y-3">
                 <div
                   onClick={() => setSelectedBaseModel('gpt4')}
-                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-                    selectedBaseModel === 'gpt4' ? 'bg-purple-50 border-purple-300 ring-2 ring-purple-500/20' : 'bg-slate-50 border-slate-200'
-                  }`}
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${selectedBaseModel === 'gpt4' ? 'bg-purple-50 border-purple-300 ring-2 ring-purple-500/20' : 'bg-slate-50 border-slate-200'
+                    }`}
                 >
                   <div>
                     <h5 className="text-xs font-bold text-slate-900">GPT-4-Turbo</h5>
@@ -485,9 +506,8 @@ export default function Agents() {
 
                 <div
                   onClick={() => setSelectedBaseModel('llama')}
-                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-                    selectedBaseModel === 'llama' ? 'bg-purple-50 border-purple-300 ring-2 ring-purple-500/20' : 'bg-slate-50 border-slate-200'
-                  }`}
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${selectedBaseModel === 'llama' ? 'bg-purple-50 border-purple-300 ring-2 ring-purple-500/20' : 'bg-slate-50 border-slate-200'
+                    }`}
                 >
                   <div>
                     <h5 className="text-xs font-bold text-slate-900">Llama-3 70B</h5>
@@ -521,13 +541,45 @@ export default function Agents() {
             <div className="p-6 flex-1 overflow-y-auto space-y-4 bg-slate-50">
               {messages.map((m) => (
                 <div key={m.id} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`p-3.5 rounded-2xl max-w-[80%] text-xs ${
-                    m.sender === 'user' ? 'bg-purple-600 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none shadow-xs'
-                  }`}>
+                  <div className={`p-3.5 rounded-2xl max-w-[80%] text-xs ${m.sender === 'user' ? 'bg-purple-600 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none shadow-xs'
+                    }`}>
                     {m.text}
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Quick Intent Test Chips */}
+            <div className="px-4 py-2 bg-slate-100/80 border-t border-slate-200 flex flex-wrap gap-1.5 text-[11px]">
+              <span className="text-[10px] font-bold text-slate-400 w-full mb-0.5">Quick Test Intents:</span>
+              <button
+                type="button"
+                onClick={() => handleSendMessage(undefined as any, 'check_balance', 'Check my current balance')}
+                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold hover:border-purple-400 hover:text-purple-600 transition-colors"
+              >
+                💳 Check Balance
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSendMessage(undefined as any, 'check_usage', 'Check my data usage')}
+                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold hover:border-purple-400 hover:text-purple-600 transition-colors"
+              >
+                📊 Check Usage
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSendMessage(undefined as any, 'troubleshoot_router', 'My internet is slow')}
+                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold hover:border-purple-400 hover:text-purple-600 transition-colors"
+              >
+                🔧 Troubleshoot
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSendMessage(undefined as any, 'pay_bill', 'Pay my monthly bill')}
+                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold hover:border-purple-400 hover:text-purple-600 transition-colors"
+              >
+                💵 Pay Bill
+              </button>
             </div>
 
             <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-200 bg-white flex gap-2">
