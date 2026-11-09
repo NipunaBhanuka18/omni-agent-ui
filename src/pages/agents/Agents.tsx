@@ -102,6 +102,22 @@ export default function Agents() {
     }));
   };
 
+  const toggleAgentStatus = (agentId: string) => {
+    setAgentFleet((prev) => {
+      const updated = prev.map((a) => {
+        if (a.agentId === agentId) {
+          const nextStatus = a.status === 'ACTIVE' || a.status === 'PUBLISHED' ? 'DRAFT' : 'ACTIVE';
+          return { ...a, status: nextStatus };
+        }
+        return a;
+      });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('omni_agent_fleet', JSON.stringify(updated));
+      }
+      return updated;
+    });
+  };
+
   const handleSaveAgent = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSavingAgent(true);
@@ -457,10 +473,12 @@ export default function Agents() {
                       </div>
                     </div>
                     <span
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                      onClick={() => toggleAgentStatus(agent.agentId)}
+                      title="Click to toggle status (Draft / Active)"
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-all select-none hover:scale-105 ${
                         agent.status === 'ACTIVE' || agent.status === 'PUBLISHED'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-amber-100 text-amber-800'
+                          ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                          : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
                       }`}
                     >
                       {agent.status || 'DRAFT'}
@@ -484,22 +502,34 @@ export default function Agents() {
                       <span className="text-[10px] text-slate-400 block font-bold">Brand</span>
                       <span className="font-bold text-slate-900">{agent.brandName || 'Dialog Axiata'}</span>
                     </div>
-                    <button
-                      onClick={() => {
-                        setMessages([
-                          {
-                            id: Date.now(),
-                            sender: 'bot',
-                            text: agent.welcomeMessage || `Hello! I am ${agent.displayName}. How can I assist you today?`,
-                          },
-                        ]);
-                        setShowTestDrawer(true);
-                      }}
-                      className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-colors"
-                    >
-                      <Play className="w-3.5 h-3.5" />
-                      <span>Test Agent</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {agent.status === 'DRAFT' && (
+                        <button
+                          onClick={() => toggleAgentStatus(agent.agentId)}
+                          className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center gap-1 transition-all"
+                          title="Publish this agent to make it Active"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Publish</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          setMessages([
+                            {
+                              id: Date.now(),
+                              sender: 'bot',
+                              text: agent.welcomeMessage || `Hello! I am ${agent.displayName}. How can I assist you today?`,
+                            },
+                          ]);
+                          setShowTestDrawer(true);
+                        }}
+                        className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-colors"
+                      >
+                        <Play className="w-3.5 h-3.5" />
+                        <span>Test Agent</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
