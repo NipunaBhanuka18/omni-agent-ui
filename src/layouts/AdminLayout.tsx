@@ -31,6 +31,21 @@ export default function AdminLayout() {
 
   const isAdminMode = location.pathname.startsWith("/admin");
 
+  // Determine if the currently logged in user is a platform Super Admin
+  const isSuperAdmin = Boolean(
+    user?.role === "super_admin" ||
+    user?.role === "superadmin" ||
+    user?.isSuperAdmin === true ||
+    (user?.email && user.email.toLowerCase().includes("superadmin"))
+  );
+
+  // Security guard: Redirect tenant/company admins away from super admin paths
+  React.useEffect(() => {
+    if (isAdminMode && !isSuperAdmin) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAdminMode, isSuperAdmin, navigate]);
+
   const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = () => {
@@ -137,19 +152,21 @@ export default function AdminLayout() {
           </button>
         </div>
 
-        {/* Portal Switcher Button */}
-        <div className="px-4 pt-5">
-          <button
-            onClick={() => {
-              setIsMobileSidebarOpen(false);
-              navigate(isAdminMode ? "/dashboard" : "/admin/dashboard");
-            }}
-            className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 hover:from-indigo-500/20 hover:via-purple-500/20 hover:to-pink-500/20 text-indigo-200 text-xs font-bold border border-indigo-500/30 flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm hover:border-indigo-400"
-          >
-            <ShieldCheck className="w-4 h-4 text-cyan-400" />
-            <span>Switch to {isAdminMode ? "Company Mode" : "Super Admin Mode"}</span>
-          </button>
-        </div>
+        {/* Portal Switcher Button: ONLY visible to Super Admin users */}
+        {isSuperAdmin && (
+          <div className="px-4 pt-5">
+            <button
+              onClick={() => {
+                setIsMobileSidebarOpen(false);
+                navigate(isAdminMode ? "/dashboard" : "/admin/dashboard");
+              }}
+              className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 hover:from-indigo-500/20 hover:via-purple-500/20 hover:to-pink-500/20 text-indigo-200 text-xs font-bold border border-indigo-500/30 flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm hover:border-indigo-400"
+            >
+              <ShieldCheck className="w-4 h-4 text-cyan-400" />
+              <span>Switch to {isAdminMode ? "Company Mode" : "Super Admin Mode"}</span>
+            </button>
+          </div>
+        )}
 
         {/* Navigation Links */}
         <nav className="flex-1 px-3 pt-6 space-y-2 overflow-y-auto no-scrollbar">

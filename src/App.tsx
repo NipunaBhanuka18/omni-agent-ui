@@ -68,6 +68,23 @@ const ProtectedRoute = () => {
   return <Outlet />;
 };
 
+// Protected Super Admin Route component
+const SuperAdminRoute = () => {
+  const user = useAuthStore((state) => state.user);
+  const isSuperAdmin = Boolean(
+    user?.role === "super_admin" ||
+    user?.role === "superadmin" ||
+    user?.isSuperAdmin === true ||
+    (user?.email && user.email.toLowerCase().includes("superadmin"))
+  );
+
+  if (!isSuperAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Outlet />;
+};
+
 function App() {
   return (
     <BrowserRouter>
@@ -123,18 +140,20 @@ function App() {
             <Route path="/tools-forms" element={<ToolsManagement />} />
             <Route path="/notifications" element={<Notifications />} />
 
-            {/* Super Admin Workplace */}
-            <Route path="/admin/dashboard" element={<SuperAdminDashboard />} />
-            <Route path="/admin/chat" element={<ChatBotPlayground />} />
-            <Route path="/admin/organizations" element={<OrganizationManagement />} />
-            <Route path="/admin/packages" element={<SubscriptionPackages />} />
-            <Route path="/admin/api" element={<Api />} />
-            <Route path="/admin/channels" element={<Channels />} />
-            <Route path="/admin/agents" element={<Agents />} />
-            <Route path="/admin/tools" element={<ToolsManagement />} />
-            <Route path="/admin/tools-forms" element={<ToolsManagement />} />
-            <Route path="/admin/notifications" element={<Notifications />} />
-            <Route path="/admin/settings" element={<Settings />} />
+            {/* Super Admin Workplace (Guarded) */}
+            <Route element={<SuperAdminRoute />}>
+              <Route path="/admin/dashboard" element={<SuperAdminDashboard />} />
+              <Route path="/admin/chat" element={<ChatBotPlayground />} />
+              <Route path="/admin/organizations" element={<OrganizationManagement />} />
+              <Route path="/admin/packages" element={<SubscriptionPackages />} />
+              <Route path="/admin/api" element={<Api />} />
+              <Route path="/admin/channels" element={<Channels />} />
+              <Route path="/admin/agents" element={<Agents />} />
+              <Route path="/admin/tools" element={<ToolsManagement />} />
+              <Route path="/admin/tools-forms" element={<ToolsManagement />} />
+              <Route path="/admin/notifications" element={<Notifications />} />
+              <Route path="/admin/settings" element={<Settings />} />
+            </Route>
           </Route>
         </Route>
 
