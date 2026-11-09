@@ -14,6 +14,109 @@ export default function Agents() {
   const [newAgentPrompt, setNewAgentPrompt] = useState('You are an helpful AI customer support agent for SLT.');
   const [selectedBaseModel, setSelectedBaseModel] = useState('gpt4');
 
+  // Create AI agent form state (matching MVP console specification)
+  const initialAgentForm = {
+    displayName: '',
+    publicAgentKey: '',
+    brandName: '',
+    modelId: 'amazon.nova-lite-v1:0',
+    knowledgeBaseRef: '',
+    suggestedPrompts: '',
+    toolIds: [] as string[],
+    enabledSubAgents: ['general', 'sales', 'billing', 'technical', 'lead'] as string[],
+    welcomeMessage: '',
+    systemPrompt: '',
+  };
+
+  const [createAgentForm, setCreateAgentForm] = useState(initialAgentForm);
+  const [isSavingAgent, setIsSavingAgent] = useState(false);
+
+  const availableTools = [
+    { id: 'create_ticket', label: 'Create support ticket · mcp' },
+    { id: 'check_order', label: 'Check order status · api' },
+    { id: 'sales_form', label: 'Sales interest form · form' },
+  ];
+
+  const availableSubAgents = [
+    { id: 'general', label: 'general' },
+    { id: 'sales', label: 'sales' },
+    { id: 'billing', label: 'billing' },
+    { id: 'technical', label: 'technical' },
+    { id: 'lead', label: 'lead' },
+  ];
+
+  const toggleTool = (toolId: string) => {
+    setCreateAgentForm((prev) => ({
+      ...prev,
+      toolIds: prev.toolIds.includes(toolId)
+        ? prev.toolIds.filter((id) => id !== toolId)
+        : [...prev.toolIds, toolId],
+    }));
+  };
+
+  const toggleSubAgent = (agentKey: string) => {
+    setCreateAgentForm((prev) => ({
+      ...prev,
+      enabledSubAgents: prev.enabledSubAgents.includes(agentKey)
+        ? prev.enabledSubAgents.filter((key) => key !== agentKey)
+        : [...prev.enabledSubAgents, agentKey],
+    }));
+  };
+
+  const handleSaveAgent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingAgent(true);
+
+    const payload = {
+      displayName: createAgentForm.displayName.trim() || 'Customer Support Agent',
+      publicAgentKey: (
+        createAgentForm.publicAgentKey.trim() ||
+        createAgentForm.displayName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') ||
+        'agent-draft'
+      ).toLowerCase(),
+      brandName: createAgentForm.brandName.trim(),
+      modelId: createAgentForm.modelId.trim() || 'amazon.nova-lite-v1:0',
+      knowledgeBaseRef: createAgentForm.knowledgeBaseRef.trim(),
+      suggestedPrompts: createAgentForm.suggestedPrompts
+        ? createAgentForm.suggestedPrompts.split(',').map((s) => s.trim()).filter(Boolean)
+        : [],
+      toolIds: createAgentForm.toolIds,
+      enabledSubAgents: createAgentForm.enabledSubAgents.length > 0
+        ? createAgentForm.enabledSubAgents
+        : ['general', 'sales', 'billing', 'technical', 'lead'],
+      welcomeMessage: createAgentForm.welcomeMessage.trim(),
+      systemPrompt: createAgentForm.systemPrompt.trim(),
+    };
+
+    try {
+      const token = localStorage.getItem('omni_token') || 'token-user-1';
+      const userJson = localStorage.getItem('omni_user');
+      let tenantId = 'slt';
+      if (userJson) {
+        try {
+          const u = JSON.parse(userJson);
+          tenantId = u.tenantId || u['custom:tenant_id'] || 'slt';
+        } catch {}
+      }
+
+      await fetch('http://localhost:3001/api/dev/admin/agents', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
+          'x-tenant-id': tenantId,
+        },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      console.warn('Agent creation fallback to session state:', err);
+    } finally {
+      setIsSavingAgent(false);
+      setShowCreateAgentModal(false);
+      setCreateAgentForm(initialAgentForm);
+    }
+  };
+
   // Test Chat Drawer State
   const [messages, setMessages] = useState([
     { id: 1, sender: 'bot', text: 'Hello! I am Omni Agent WhatsApp v3.0. How can I assist you with SLT services today?' }
@@ -219,11 +322,14 @@ export default function Agents() {
               <h3 className="text-sm font-black text-slate-900">AI Agent Fleet</h3>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => setShowCreateAgentModal(true)}
+                  onClick={() => {
+                    setCreateAgentForm(initialAgentForm);
+                    setShowCreateAgentModal(true);
+                  }}
                   className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Create Agent (`POST /agents`)</span>
+                  <span>Create Agent</span>
                 </button>
                 <button
                   onClick={() => setShowKnowledgeModal(true)}
@@ -465,84 +571,174 @@ export default function Agents() {
         </div>
       )}
 
-      {/* Create Agent Modal (`POST /agents`) */}
+      {/* Create AI agent Modal */}
       {showCreateAgentModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 font-sans">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-slate-200 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-base font-black text-slate-900">Create New AI Agent</h3>
-                <span className="text-[10px] text-indigo-600 font-mono font-semibold">Endpoint: POST /agents</span>
-              </div>
-              <button onClick={() => setShowCreateAgentModal(false)} className="p-1 rounded-lg hover:bg-slate-100">
-                <X className="w-5 h-5 text-slate-500" />
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 font-sans">
+          <div className="bg-white rounded-2xl w-full max-w-2xl sm:max-w-3xl border border-slate-200 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900">Create AI agent</h2>
+              <button
+                type="button"
+                onClick={() => setShowCreateAgentModal(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                try {
-                  await apiClient.post('/agents', {
-                    name: newAgentName || `Agent-${activeChannelTab.toUpperCase()}`,
-                    channel: activeChannelTab,
-                    model: selectedBaseModel,
-                    prompt: newAgentPrompt,
-                    tools: ['check_balance', 'pay_bill', 'check_usage', 'troubleshoot_router'],
-                  });
-                  alert(`Agent "${newAgentName || 'New Agent'}" created successfully via POST /agents!`);
-                } catch (err: any) {
-                  alert(`Created agent "${newAgentName || 'New Agent'}" (Simulation Mode)`);
-                }
-                setShowCreateAgentModal(false);
-              }}
-              className="space-y-4 text-xs"
-            >
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">Agent Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. SLT Whatsapp Customer Assistant"
-                  value={newAgentName}
-                  onChange={(e) => setNewAgentName(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium"
-                  required
-                />
+            {/* Scrollable Body & Form */}
+            <form onSubmit={handleSaveAgent} className="flex-1 overflow-y-auto px-6 py-5 space-y-5 text-slate-800">
+              {/* Local demo status note */}
+              <p className="text-slate-700 text-sm leading-relaxed">
+                Local demo: this form saves a DRAFT record to LocalStack only. It does not deploy a Bedrock agent, publish a chat URL, or activate tools.
+              </p>
+
+              {/* 2-Column Fields Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                {/* Row 1 */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-900 mb-1.5">Display name</label>
+                  <input
+                    type="text"
+                    value={createAgentForm.displayName}
+                    onChange={(e) => setCreateAgentForm((prev) => ({ ...prev, displayName: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-900 mb-1.5">Public URL key</label>
+                  <input
+                    type="text"
+                    value={createAgentForm.publicAgentKey}
+                    onChange={(e) => setCreateAgentForm((prev) => ({ ...prev, publicAgentKey: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800"
+                  />
+                </div>
+
+                {/* Row 2 */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-900 mb-1.5">Brand name</label>
+                  <input
+                    type="text"
+                    value={createAgentForm.brandName}
+                    onChange={(e) => setCreateAgentForm((prev) => ({ ...prev, brandName: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-900 mb-1.5">Bedrock model ID</label>
+                  <input
+                    type="text"
+                    value={createAgentForm.modelId}
+                    onChange={(e) => setCreateAgentForm((prev) => ({ ...prev, modelId: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800"
+                  />
+                </div>
+
+                {/* Row 3 */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-900 mb-1.5">Knowledge base</label>
+                  <select
+                    value={createAgentForm.knowledgeBaseRef}
+                    onChange={(e) => setCreateAgentForm((prev) => ({ ...prev, knowledgeBaseRef: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800"
+                  >
+                    <option value="">None</option>
+                    <option value="kb-products">Products & Packages (kb-products)</option>
+                    <option value="kb-support">Support Guides (kb-support)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-900 mb-1.5">Suggested prompts (comma separated)</label>
+                  <input
+                    type="text"
+                    value={createAgentForm.suggestedPrompts}
+                    onChange={(e) => setCreateAgentForm((prev) => ({ ...prev, suggestedPrompts: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800"
+                  />
+                </div>
               </div>
 
+              {/* Enabled tools */}
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Channel Binding</label>
-                <input
-                  type="text"
-                  value={activeChannelTab.toUpperCase()}
-                  disabled
-                  className="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl font-bold text-indigo-600"
-                />
+                <label className="block text-xs font-bold text-slate-900 mb-2">Enabled tools</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {availableTools.map((tool) => (
+                    <label
+                      key={tool.id}
+                      className="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 hover:border-slate-300 transition-colors cursor-pointer bg-white"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={createAgentForm.toolIds.includes(tool.id)}
+                        onChange={() => toggleTool(tool.id)}
+                        className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                      />
+                      <span className="text-xs font-semibold text-slate-900">{tool.label}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
+              {/* Specialist sub-agents */}
               <div>
-                <label className="font-bold text-slate-700 block mb-1">System Prompt / Instructions</label>
+                <label className="block text-xs font-bold text-slate-900 mb-2">Specialist sub-agents</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {availableSubAgents.map((agent) => (
+                    <label
+                      key={agent.id}
+                      className="flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 hover:border-slate-300 transition-colors cursor-pointer bg-white"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={createAgentForm.enabledSubAgents.includes(agent.id)}
+                        onChange={() => toggleSubAgent(agent.id)}
+                        className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                      />
+                      <span className="text-xs font-bold text-slate-900">{agent.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Welcome message */}
+              <div>
+                <label className="block text-xs font-bold text-slate-900 mb-1.5">Welcome message</label>
                 <textarea
                   rows={3}
-                  value={newAgentPrompt}
-                  onChange={(e) => setNewAgentPrompt(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium"
+                  value={createAgentForm.welcomeMessage}
+                  onChange={(e) => setCreateAgentForm((prev) => ({ ...prev, welcomeMessage: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 resize-y min-h-[85px]"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              {/* System instruction */}
+              <div>
+                <label className="block text-xs font-bold text-slate-900 mb-1.5">System instruction</label>
+                <textarea
+                  rows={4}
+                  value={createAgentForm.systemPrompt}
+                  onChange={(e) => setCreateAgentForm((prev) => ({ ...prev, systemPrompt: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 resize-y min-h-[90px]"
+                />
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 bg-white">
                 <button
                   type="button"
                   onClick={() => setShowCreateAgentModal(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-bold"
+                  className="px-5 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-md"
+                  disabled={isSavingAgent}
+                  className="px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition-colors disabled:opacity-50"
                 >
-                  Save Agent
+                  {isSavingAgent ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </form>
