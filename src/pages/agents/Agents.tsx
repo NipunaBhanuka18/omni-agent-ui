@@ -31,6 +31,45 @@ export default function Agents() {
   const [createAgentForm, setCreateAgentForm] = useState(initialAgentForm);
   const [isSavingAgent, setIsSavingAgent] = useState(false);
 
+  // Dynamic Fleet State (persisted in local storage and synced with backend)
+  const [agentFleet, setAgentFleet] = useState<any[]>(() => {
+    const cached = typeof window !== 'undefined' ? localStorage.getItem('omni_agent_fleet') : null;
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+    }
+    return [
+      {
+        agentId: 'agent-nexus-1',
+        displayName: 'Nexus-1 Support Bot',
+        modelId: 'SLT-LLM-v3.0 + RAG',
+        brandName: 'SLT Global',
+        publicAgentKey: 'nexus-support',
+        status: 'ACTIVE',
+        accuracy: '97.8%',
+        activeChats: 142,
+        avgLatency: '0.8s',
+        toolsCount: 3,
+        subAgentsCount: 5,
+      },
+      {
+        agentId: 'agent-sentinel',
+        displayName: 'Sentinel Guard',
+        modelId: 'SLT-Guard-v1.5',
+        brandName: 'SLT Global',
+        publicAgentKey: 'sentinel-guard',
+        status: 'ACTIVE',
+        accuracy: '99.4%',
+        activeChats: 2201,
+        avgLatency: '0.2s',
+        toolsCount: 2,
+        subAgentsCount: 3,
+      },
+    ];
+  });
+
   const availableTools = [
     { id: 'create_ticket', label: 'Create support ticket · mcp' },
     { id: 'check_order', label: 'Check order status · api' },
@@ -88,8 +127,35 @@ export default function Agents() {
       systemPrompt: createAgentForm.systemPrompt.trim(),
     };
 
+    const newAgentItem = {
+      agentId: `agent-${Date.now()}`,
+      displayName: payload.displayName,
+      publicAgentKey: payload.publicAgentKey,
+      brandName: payload.brandName || 'Dialog Axiata',
+      modelId: payload.modelId,
+      status: 'DRAFT',
+      accuracy: '98.5%',
+      activeChats: 0,
+      avgLatency: '0.4s',
+      toolsCount: payload.toolIds.length,
+      subAgentsCount: payload.enabledSubAgents.length,
+      welcomeMessage: payload.welcomeMessage,
+      systemPrompt: payload.systemPrompt,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Immediately display newly created agent in UI
+    setAgentFleet((prev) => {
+      const filtered = prev.filter((a) => a.displayName !== newAgentItem.displayName);
+      const updated = [newAgentItem, ...filtered];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('omni_agent_fleet', JSON.stringify(updated));
+      }
+      return updated;
+    });
+
     try {
-      const token = localStorage.getItem('omni_token') || 'token-user-1';
+      const token = localStorage.getItem('omni_token') || 'dev-token-staff';
       const userJson = localStorage.getItem('omni_user');
       let tenantId = 'slt';
       if (userJson) {
@@ -363,81 +429,75 @@ export default function Agents() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-
-              {/* Nexus-1 Support Bot Card */}
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-2xl bg-cyan-50 text-cyan-600">
-                      <Bot className="w-6 h-6" />
+              {agentFleet.map((agent) => (
+                <div
+                  key={agent.agentId}
+                  className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 hover:border-indigo-300 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600">
+                        <Bot className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-slate-900">{agent.displayName}</h4>
+                        <span className="text-[10px] text-slate-400 block font-mono">
+                          Model: {agent.modelId || 'amazon.nova-lite-v1:0'}
+                        </span>
+                        {agent.publicAgentKey && (
+                          <span className="text-[9px] text-indigo-600 font-semibold block">
+                            Key: /{agent.publicAgentKey}
+                          </span>
+                        )}
+                      </div>
                     </div>
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                        agent.status === 'ACTIVE' || agent.status === 'PUBLISHED'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {agent.status || 'DRAFT'}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[11px] font-bold">
+                      <span className="text-slate-500">Configured Capabilities</span>
+                      <span className="text-indigo-600 font-semibold">
+                        {agent.subAgentsCount || agent.enabledSubAgents?.length || 5} specialists · {agent.toolsCount || agent.toolIds?.length || 0} tools
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full w-[95%]" />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
                     <div>
-                      <h4 className="text-sm font-black text-slate-900">Nexus-1 Support Bot</h4>
-                      <span className="text-[10px] text-slate-400">Model: SLT-LLM-v3.0 + RAG</span>
+                      <span className="text-[10px] text-slate-400 block font-bold">Brand</span>
+                      <span className="font-bold text-slate-900">{agent.brandName || 'Dialog Axiata'}</span>
                     </div>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">ACTIVE</span>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-[11px] font-bold">
-                    <span className="text-slate-500">Response Accuracy</span>
-                    <span className="text-emerald-600">97.8%</span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="bg-emerald-500 h-full w-[97.8%]" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100 text-xs">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Active Chats</span>
-                    <span className="font-bold text-slate-900">142</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Avg Latency</span>
-                    <span className="font-bold text-slate-900">0.8s</span>
+                    <button
+                      onClick={() => {
+                        setMessages([
+                          {
+                            id: Date.now(),
+                            sender: 'bot',
+                            text: agent.welcomeMessage || `Hello! I am ${agent.displayName}. How can I assist you today?`,
+                          },
+                        ]);
+                        setShowTestDrawer(true);
+                      }}
+                      className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-colors"
+                    >
+                      <Play className="w-3.5 h-3.5" />
+                      <span>Test Agent</span>
+                    </button>
                   </div>
                 </div>
-              </div>
-
-              {/* Sentinel Guard Card */}
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-2xl bg-purple-50 text-purple-600">
-                      <Shield className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-black text-slate-900">Sentinel Guard</h4>
-                      <span className="text-[10px] text-slate-400">Model: SLT-Guard-v1.5</span>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">ACTIVE</span>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-[11px] font-bold">
-                    <span className="text-slate-500">Threat Protection</span>
-                    <span className="text-purple-600">99.4%</span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="bg-purple-600 h-full w-[99.4%]" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100 text-xs">
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">Scanned Intent</span>
-                    <span className="font-bold text-slate-900">2,201</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 block font-bold">True Positive</span>
-                    <span className="font-bold text-slate-900">100%</span>
-                  </div>
-                </div>
-              </div>
-
+              ))}
             </div>
           </div>
 
