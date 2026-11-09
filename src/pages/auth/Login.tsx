@@ -46,6 +46,9 @@ export default function Login() {
         // Fallback local authentication for dev testing
         const isLiveAgent = formData.email.includes('agent');
         const role = isLiveAgent ? 'live_agent' : 'admin';
+        const isDialog = formData.email.toLowerCase().includes('dialog');
+        const companyName = isDialog ? 'Dialog Axiata' : 'SLT Global';
+        const tenantId = isDialog ? 'dialog' : 'slt';
         data = {
           success: true,
           token: `Bearer dev-token-${formData.email.split('@')[0]}`,
@@ -54,8 +57,9 @@ export default function Login() {
             name: formData.email.split('@')[0].toUpperCase(),
             email: formData.email,
             role: role,
-            tenantId: 'slt',
-            'custom:tenant_id': 'slt',
+            tenantId: tenantId,
+            companyName: companyName,
+            'custom:tenant_id': tenantId,
           },
         };
       }

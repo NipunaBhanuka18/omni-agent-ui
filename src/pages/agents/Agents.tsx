@@ -3,9 +3,17 @@ import { Bot, Shield, Play, Terminal, Cpu, Database, CheckCircle2, AlertTriangle
 import Button from '@/components/Button';
 import InputField from '@/components/InputField';
 import { apiClient } from '@/api/apiClient';
+import { useAuthStore } from '@/store/authStore';
 
 export default function Agents() {
-  const [selectedOrg, setSelectedOrg] = useState<string | null>('ABC Company (pvt) Ltd');
+  const user = useAuthStore((state) => state.user);
+  const currentCompany =
+    user?.companyName ||
+    (user?.email?.toLowerCase().includes("dialog") || user?.tenantId?.toLowerCase().includes("dialog") || user?.name?.toLowerCase().includes("dialog")
+      ? "Dialog Axiata PLC"
+      : "Dialog Axiata PLC");
+
+  const [selectedOrg, setSelectedOrg] = useState<string | null>(currentCompany);
   const [activeChannelTab, setActiveChannelTab] = useState<'whatsapp' | 'messenger' | 'sms' | 'email'>('whatsapp');
   const [showTestDrawer, setShowTestDrawer] = useState(false);
   const [showKnowledgeModal, setShowKnowledgeModal] = useState(false);
@@ -363,16 +371,16 @@ export default function Agents() {
                 <span>Switch Organization</span>
               </button>
               <h1 className="text-2xl font-black tracking-tight">AI Agent</h1>
-              <p className="text-xs text-slate-300 mt-0.5">Real-time infrastructure health and user growth metrics for SLT Global.</p>
+              <p className="text-xs text-slate-300 mt-0.5">Real-time infrastructure health and user growth metrics for {selectedOrg || currentCompany}.</p>
             </div>
 
             <div className="bg-white text-slate-900 p-3.5 rounded-2xl border border-slate-200 shadow-md flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white font-black flex items-center justify-center text-xs shadow-xs">
-                Abc
+                {(selectedOrg || currentCompany).substring(0, 2).toUpperCase()}
               </div>
               <div>
-                <h4 className="text-xs font-black">{selectedOrg}</h4>
-                <span className="text-[9px] text-slate-400 block">50 APIs Management System</span>
+                <h4 className="text-xs font-black">{selectedOrg || currentCompany}</h4>
+                <span className="text-[9px] text-slate-400 block">Omni AI Agent System</span>
               </div>
               <span className="ml-2 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
                 ● Connection: Active

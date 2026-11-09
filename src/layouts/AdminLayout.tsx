@@ -25,6 +25,7 @@ export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const logout = useAuthStore((state) => state.logout);
+  const user = useAuthStore((state) => state.user);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const isAdminMode = location.pathname.startsWith("/admin");
@@ -35,6 +36,37 @@ export default function AdminLayout() {
     logout();
     navigate("/login");
   };
+
+  // Derive dynamic user display name and company workspace
+  const displayName =
+    user?.name ||
+    (isAdminMode ? "Super Admin" : "Company Admin");
+
+  const companyDisplayName =
+    user?.companyName ||
+    user?.organization ||
+    user?.company ||
+    (user?.email?.toLowerCase().includes("dialog") ||
+    user?.tenantId?.toLowerCase().includes("dialog") ||
+    user?.name?.toLowerCase().includes("dialog")
+      ? "Dialog Axiata"
+      : user?.tenantId === "slt" || user?.email?.toLowerCase().includes("slt")
+      ? "SLT Global"
+      : "Dialog Axiata");
+
+  const workspaceLabel = isAdminMode ? "System Root" : `${companyDisplayName} Workspace`;
+
+  // Initials (e.g. "DA" for Dialog Admin, "SA" for Super Admin)
+  const initials = (() => {
+    if (isAdminMode) return "SA";
+    const source = user?.name || companyDisplayName;
+    if (source) {
+      const parts = source.trim().split(/\s+/);
+      if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    return "DA";
+  })();
 
   const companyNavItems = [
     { name: "Dash-Board", path: "/dashboard", icon: LayoutGrid },
@@ -90,7 +122,7 @@ export default function AdminLayout() {
               </h1>
               <p className="text-[9px] font-extrabold text-cyan-400/90 tracking-widest uppercase mt-1 flex items-center gap-1">
                 <Sparkles className="w-2.5 h-2.5" />
-                {isAdminMode ? "SUPER ADMIN PORTAL" : "COMPANY WORKSPACE"}
+                {isAdminMode ? "SUPER ADMIN PORTAL" : `${companyDisplayName.toUpperCase()} WORKSPACE`}
               </p>
             </div>
           </Link>
@@ -191,14 +223,14 @@ export default function AdminLayout() {
             <div className="w-px h-6 bg-indigo-500/30 mx-0.5 sm:mx-1" />
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-600 to-purple-600 text-white font-black flex items-center justify-center text-xs shadow-md ring-2 ring-indigo-400/30">
-                {isAdminMode ? "SA" : "CA"}
+                {initials}
               </div>
               <div className="hidden sm:flex flex-col text-left">
                 <span className="font-black text-slate-100 leading-tight">
-                  {isAdminMode ? "Super Admin" : "Company Admin"}
+                  {displayName}
                 </span>
                 <span className="text-[10px] text-cyan-400 font-extrabold tracking-wider">
-                  {isAdminMode ? "System Root" : "Acme Corp Workspace"}
+                  {workspaceLabel}
                 </span>
               </div>
             </div>
