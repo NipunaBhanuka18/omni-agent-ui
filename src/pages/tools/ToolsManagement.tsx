@@ -23,79 +23,55 @@ export interface GovernedTool {
 }
 
 export default function ToolsManagement() {
-  const [tools, setTools] = useState<GovernedTool[]>([
-    {
-      toolId: 'tool-ticket',
-      name: 'create_ticket',
-      displayName: 'Create Support Ticket',
-      type: 'mcp',
-      description: 'Creates a verified SLT customer support ticket through AWS Bedrock AgentCore Gateway MCP.',
-      enabled: true,
-      gatewayUrl: 'https://gateway.slt.lk/mcp/v1',
-      targetToolName: 'support___create_ticket',
-      inputSchema: JSON.stringify({
-        type: 'object',
-        properties: {
-          accountNo: { type: 'string', description: 'Customer SLT account number' },
-          category: { type: 'string', enum: ['broadband', 'voice', 'peotv', 'billing'] },
-          description: { type: 'string', description: 'Problem description' },
-        },
-        required: ['accountNo', 'category', 'description'],
-      }, null, 2),
-    },
-    {
-      toolId: 'tool-order',
-      name: 'check_order',
-      displayName: 'Check Order & Fault Status',
-      type: 'api',
-      description: 'Checks customer service activation order or reported fault status using a reference ticket number.',
-      enabled: true,
-      endpoint: 'https://api.slt.lk/v2/orders/check',
-      secretId: 'sec-slt-orders-token',
-      inputSchema: JSON.stringify({
-        type: 'object',
-        properties: {
-          referenceNumber: { type: 'string', description: 'Order reference number' },
-        },
-        required: ['referenceNumber'],
-      }, null, 2),
-    },
-    {
-      toolId: 'form-lead',
-      name: 'sales_interest',
-      displayName: 'Sales & Package Interest Form',
-      type: 'form',
-      description: 'Presents an inline interactive customer form in the chat when high-intent packages are discussed.',
-      enabled: true,
-      formSchema: {
-        formId: 'sales_interest',
-        title: 'Tell us what you need',
-        description: 'Share your contact details so our sales specialist can assist with fiber packages.',
-        fields: [
-          { name: 'name', label: 'Your Full Name', type: 'text', required: true },
-          { name: 'contact', label: 'Mobile or Email', type: 'text', required: true },
-          { name: 'package', label: 'Desired Package (Fiber/4G/PeoTV)', type: 'text', required: false },
-        ],
+  const [tools, setTools] = useState<GovernedTool[]>(() => {
+    const cached = typeof window !== 'undefined' ? localStorage.getItem('omni_tools') : null;
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+    }
+    return [
+      {
+        toolId: 'tool-ticket',
+        name: 'create_ticket',
+        displayName: 'Create support ticket',
+        type: 'mcp',
+        description: 'Creates a verified support ticket through AgentCore Gateway.',
+        enabled: true,
+        gatewayUrl: 'https://gateway.dialog.lk/mcp/v1',
+        targetToolName: 'support___create_ticket',
       },
-    },
-    {
-      toolId: 'tool-bill-lookup',
-      name: 'fetch_billing_summary',
-      displayName: 'Billing & Invoice Lookup',
-      type: 'api',
-      description: 'Securely looks up current bill balance, due dates, and last payment receipts.',
-      enabled: true,
-      endpoint: 'https://api.slt.lk/v1/billing/summary',
-      secretId: 'sec-billing-credentials',
-      inputSchema: JSON.stringify({
-        type: 'object',
-        properties: {
-          telephoneNumber: { type: 'string', description: 'SLT landline or account number' },
+      {
+        toolId: 'tool-order',
+        name: 'check_order',
+        displayName: 'Check order status',
+        type: 'api',
+        description: 'Checks an order using a reference number.',
+        enabled: true,
+        endpoint: 'https://api.dialog.lk/v2/orders/check',
+        secretId: 'sec-dialog-orders-token',
+      },
+      {
+        toolId: 'form-lead',
+        name: 'sales_interest',
+        displayName: 'Sales interest form',
+        type: 'form',
+        description: 'Collects contact details for a sales follow-up.',
+        enabled: true,
+        formSchema: {
+          formId: 'sales_interest',
+          title: 'Tell us what you need',
+          description: 'Share your contact details so our sales specialist can assist with fiber packages.',
+          fields: [
+            { name: 'name', label: 'Your Full Name', type: 'text', required: true },
+            { name: 'contact', label: 'Mobile or Email', type: 'text', required: true },
+            { name: 'package', label: 'Desired Package', type: 'text', required: false },
+          ],
         },
-        required: ['telephoneNumber'],
-      }, null, 2),
-    },
-  ]);
+      },
+    ];
+  });
 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const addToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
@@ -105,6 +81,31 @@ export default function ToolsManagement() {
   const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
+
+  // Sync tools with backend
+  React.useEffect(() => {
+    const fetchTools = async () => {
+      try {
+        const token = localStorage.getItem('omni_token') || 'dev-token-staff';
+        const res = await fetch('http://localhost:3001/api/dev/admin/tools', {
+          headers: {
+            Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
+            'x-tenant-id': 'dialog',
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.items) && data.items.length > 0) {
+            setTools(data.items);
+            localStorage.setItem('omni_tools', JSON.stringify(data.items));
+          }
+        }
+      } catch (err) {
+        console.warn('Backend tools sync fallback to local state:', err);
+      }
+    };
+    fetchTools();
+  }, []);
 
   const [filterType, setFilterType] = useState<'all' | 'api' | 'mcp' | 'form'>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -231,178 +232,69 @@ export default function ToolsManagement() {
     }
   };
 
-  const filteredTools = tools.filter((t) => {
-    if (filterType === 'all') return true;
-    return t.type === filterType;
-  });
-
   return (
     <div className="space-y-6 font-sans max-w-7xl mx-auto w-full">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
 
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 rounded-3xl border border-indigo-900/50 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-cyan-400 shadow-md">
-            <Wrench className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-black tracking-tight">Governed Tools & Interactive Forms</h1>
-              <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-[10px] font-black uppercase tracking-wider">
-                MCP & API Ready
-              </span>
-            </div>
-            <p className="text-xs text-slate-300 mt-0.5">
-              Connect approved HTTPS APIs, Bedrock AgentCore MCP gateways, and inline customer data capture forms.
-            </p>
-          </div>
+      {/* Header and Action */}
+      <div className="flex items-center justify-between pt-1">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Tools & forms</h1>
+          <p className="text-sm text-slate-300 mt-1">
+            Connect approved APIs, AgentCore Gateway MCP tools, and customer forms.
+          </p>
         </div>
-
         <button
           onClick={openCreateModal}
-          className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer shrink-0"
+          className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
         >
-          <Plus className="w-4 h-4" />
-          <span>Create Governed Tool</span>
+          <span>+ Create tool</span>
         </button>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        {[
-          { id: 'all', label: `All Tools (${tools.length})` },
-          { id: 'api', label: `HTTPS APIs (${tools.filter((t) => t.type === 'api').length})` },
-          { id: 'mcp', label: `AgentCore MCP (${tools.filter((t) => t.type === 'mcp').length})` },
-          { id: 'form', label: `Customer Forms (${tools.filter((t) => t.type === 'form').length})` },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setFilterType(tab.id as any)}
-            className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
-              filterType === tab.id
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Tools Grid */}
+      {/* Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTools.map((tool) => (
+        {tools.map((tool) => (
           <div
             key={tool.toolId}
-            className={`bg-white rounded-3xl border transition-all p-6 shadow-sm hover:shadow-md flex flex-col justify-between space-y-4 ${
-              tool.enabled ? 'border-slate-200' : 'border-slate-200/60 opacity-70 bg-slate-50/50'
-            }`}
+            className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-slate-300 transition-all"
           >
             <div className="space-y-3">
-              <div className="flex items-start justify-between gap-2">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-black uppercase tracking-wider ${
-                        tool.type === 'mcp'
-                          ? 'bg-purple-100 text-purple-700 border border-purple-200'
-                          : tool.type === 'api'
-                          ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                          : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                      }`}
-                    >
-                      {tool.type === 'mcp' ? 'AgentCore MCP' : tool.type.toUpperCase()}
-                    </span>
-                    <span
-                      className={`w-2 h-2 rounded-full ${tool.enabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
-                      title={tool.enabled ? 'Enabled' : 'Disabled'}
-                    />
-                  </div>
-                  <h3 className="text-base font-black text-slate-900 tracking-tight pt-1">{tool.displayName}</h3>
-                  <code className="text-[10px] text-slate-400 font-mono block">{tool.name}</code>
-                </div>
-
-                <button
-                  onClick={() => toggleToolEnabled(tool.toolId)}
-                  className={`p-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                    tool.enabled
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                      : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
-                  }`}
-                  title={tool.enabled ? 'Disable Tool' : 'Enable Tool'}
-                >
-                  <Power className="w-3.5 h-3.5" />
-                </button>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+                  {tool.displayName}
+                </h3>
+                <span className="bg-sky-50 text-sky-700 border border-sky-100 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide">
+                  {tool.type.toUpperCase()}
+                </span>
               </div>
 
-              <p className="text-xs text-slate-600 font-medium leading-relaxed line-clamp-3">
+              <p className="text-xs text-slate-500 font-normal leading-relaxed min-h-[36px]">
                 {tool.description}
               </p>
 
-              {/* Technical Parameter Details */}
-              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 space-y-1.5 text-[11px]">
-                {tool.type === 'api' && (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-400 font-semibold">Endpoint:</span>
-                      <span className="font-mono text-slate-700 truncate max-w-[170px]">{tool.endpoint}</span>
-                    </div>
-                    {tool.secretId && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-400 font-semibold">Secret ID:</span>
-                        <span className="font-mono text-indigo-600">{tool.secretId}</span>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {tool.type === 'mcp' && (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-400 font-semibold">Gateway:</span>
-                      <span className="font-mono text-slate-700 truncate max-w-[170px]">{tool.gatewayUrl}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-400 font-semibold">Target Tool:</span>
-                      <span className="font-mono text-purple-700 font-bold">{tool.targetToolName}</span>
-                    </div>
-                  </>
-                )}
-
-                {tool.type === 'form' && tool.formSchema && (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-400 font-semibold">Form Title:</span>
-                      <span className="font-bold text-slate-800">{tool.formSchema.title}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-400 font-semibold">Inputs:</span>
-                      <span className="font-mono text-emerald-700">
-                        {tool.formSchema.fields.map((f) => f.name).join(', ')}
-                      </span>
-                    </div>
-                  </>
-                )}
+              <div className="flex items-center gap-2 pt-1">
+                <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 text-[11px] font-medium px-2.5 py-0.5 rounded-full">
+                  {tool.enabled ? 'Enabled' : 'Disabled'}
+                </span>
+                <span className="bg-sky-50 text-sky-700 border border-sky-100 font-mono text-[11px] font-medium px-2.5 py-0.5 rounded-md">
+                  {tool.name}
+                </span>
               </div>
             </div>
 
-            {/* Action Bar */}
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+            <div className="pt-2 flex items-center gap-2">
               <button
                 onClick={() => openEditModal(tool)}
-                className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
               >
-                <Edit2 className="w-3.5 h-3.5" />
-                <span>Configure</span>
+                Edit
               </button>
-
               <button
                 onClick={() => handleDeleteTool(tool.toolId)}
-                className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                title="Delete Tool"
+                className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors shadow-2xs cursor-pointer"
               >
-                <Trash2 className="w-4 h-4" />
+                Delete
               </button>
             </div>
           </div>

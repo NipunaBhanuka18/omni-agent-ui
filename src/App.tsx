@@ -45,6 +45,7 @@ import Api from "@/pages/api/Api";
 import Channels from "@/pages/channels/Channels";
 import Agents from "@/pages/agents/Agents";
 import Notifications from "@/pages/notifications/Notifications";
+import ToolsManagement from "@/pages/tools/ToolsManagement";
 import ChatBotPlayground from "@/pages/agents/ChatBotPlayground";
 import LiveAgentConsole from "@/pages/agent/LiveAgentConsole";
 import HostedChatWidget from "@/pages/public/HostedChatWidget";
@@ -118,6 +119,8 @@ function App() {
             <Route path="/api" element={<Api />} />
             <Route path="/channels" element={<Channels />} />
             <Route path="/agents" element={<Agents />} />
+            <Route path="/tools" element={<ToolsManagement />} />
+            <Route path="/tools-forms" element={<ToolsManagement />} />
             <Route path="/notifications" element={<Notifications />} />
 
             {/* Super Admin Workplace */}
@@ -128,6 +131,8 @@ function App() {
             <Route path="/admin/api" element={<Api />} />
             <Route path="/admin/channels" element={<Channels />} />
             <Route path="/admin/agents" element={<Agents />} />
+            <Route path="/admin/tools" element={<ToolsManagement />} />
+            <Route path="/admin/tools-forms" element={<ToolsManagement />} />
             <Route path="/admin/notifications" element={<Notifications />} />
             <Route path="/admin/settings" element={<Settings />} />
           </Route>

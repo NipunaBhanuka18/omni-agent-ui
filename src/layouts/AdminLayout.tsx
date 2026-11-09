@@ -17,6 +17,7 @@ import {
   X,
   Sparkles,
   Headset,
+  Command,
 } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import ChatBotWidget from "../components/ChatBotWidget";
@@ -76,6 +77,7 @@ export default function AdminLayout() {
     { name: "API", path: "/api", icon: Code2 },
     { name: "Channels", path: "/channels", icon: SlidersHorizontal },
     { name: "AI Agents", path: "/agents", icon: Bot },
+    { name: "Tools & Forms", path: "/tools", icon: Command },
     { name: "Notifications", path: "/notifications", icon: Bell },
     { name: "Settings", path: "/settings", icon: Settings },
   ];
@@ -88,6 +90,7 @@ export default function AdminLayout() {
     { name: "API Management", path: "/admin/api", icon: Code2 },
     { name: "Channels Management", path: "/admin/channels", icon: SlidersHorizontal },
     { name: "AI Agent Management", path: "/admin/agents", icon: Bot },
+    { name: "Tools & Forms", path: "/admin/tools", icon: Command },
     { name: "Notifications", path: "/admin/notifications", icon: Bell },
     { name: "Settings", path: "/admin/settings", icon: Settings },
   ];
