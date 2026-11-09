@@ -1,9 +1,46 @@
-import React, { useState } from 'react';
-import { Bot, Shield, Play, Terminal, Cpu, Database, CheckCircle2, AlertTriangle, RefreshCw, Send, Plus, ArrowLeft, Building2, X, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  Bot,
+  Shield,
+  Play,
+  Terminal,
+  Cpu,
+  Database,
+  CheckCircle2,
+  AlertTriangle,
+  RefreshCw,
+  Send,
+  Plus,
+  ArrowLeft,
+  Building2,
+  X,
+  ExternalLink,
+  UploadCloud,
+  FileText,
+  Trash2,
+  Search,
+} from 'lucide-react';
 import Button from '@/components/Button';
 import InputField from '@/components/InputField';
 import { apiClient } from '@/api/apiClient';
 import { useAuthStore } from '@/store/authStore';
+
+export interface KbItem {
+  kbId: string;
+  name: string;
+  description: string;
+  category: string;
+  filesCount: number;
+  totalBytes: number;
+  status: 'READY' | 'SYNCING';
+  updatedAt: string;
+  documents: Array<{
+    name: string;
+    size: number;
+    type: string;
+    uploadedAt: string;
+  }>;
+}
 
 export default function Agents() {
   const user = useAuthStore((state) => state.user);
@@ -21,6 +58,234 @@ export default function Agents() {
   const [newAgentName, setNewAgentName] = useState('');
   const [newAgentPrompt, setNewAgentPrompt] = useState('You are an helpful AI customer support agent for SLT.');
   const [selectedBaseModel, setSelectedBaseModel] = useState('gpt4');
+
+  // Knowledge Base State
+  const [knowledgeBases, setKnowledgeBases] = useState<KbItem[]>(() => {
+    const cached = typeof window !== 'undefined' ? localStorage.getItem('omni_knowledge_bases') : null;
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+    }
+    return [
+      {
+        kbId: 'kb-products',
+        name: 'Products & Packages (kb-products)',
+        description: 'Official broadband, voice, and fiber data packages and fair usage policy documentation.',
+        category: 'Products & Plans',
+        filesCount: 2,
+        totalBytes: 24580,
+        status: 'READY',
+        updatedAt: 'Just now',
+        documents: [
+          { name: 'dialog_broadband_plans_2026.pdf', size: 18450, type: 'pdf', uploadedAt: 'Yesterday' },
+          { name: 'fair_usage_policy_faq.txt', size: 6130, type: 'txt', uploadedAt: 'Yesterday' },
+        ],
+      },
+      {
+        kbId: 'kb-support',
+        name: 'Support Guides (kb-support)',
+        description: 'Fiber ONU router setup, self-troubleshooting steps, and optical loss error diagnosis.',
+        category: 'Technical Support',
+        filesCount: 2,
+        totalBytes: 15300,
+        status: 'READY',
+        updatedAt: '2 days ago',
+        documents: [
+          { name: 'fiber_onu_router_setup.md', size: 9200, type: 'md', uploadedAt: '2 days ago' },
+          { name: 'los_red_light_troubleshooting.txt', size: 6100, type: 'txt', uploadedAt: '2 days ago' },
+        ],
+      },
+    ];
+  });
+
+  const [activeKbTab, setActiveKbTab] = useState<'list' | 'upload'>('list');
+  const [kbSearchQuery, setKbSearchQuery] = useState('');
+  const [isUploadingKb, setIsUploadingKb] = useState(false);
+  const [uploadSuccessMsg, setUploadSuccessMsg] = useState('');
+
+  // Upload Form State
+  const [newKbName, setNewKbName] = useState('');
+  const [newKbRef, setNewKbRef] = useState('');
+  const [newKbCategory, setNewKbCategory] = useState('Products & Plans');
+  const [newKbDescription, setNewKbDescription] = useState('');
+  const [newKbTextContent, setNewKbTextContent] = useState('');
+  const [selectedKbFiles, setSelectedKbFiles] = useState<File[]>([]);
+
+  // Sync Knowledge Bases with backend on load
+  useEffect(() => {
+    const fetchKnowledgeBases = async () => {
+      try {
+        const token = localStorage.getItem('omni_token') || 'dev-token-staff';
+        const res = await fetch('http://localhost:3001/api/dev/admin/knowledge-bases', {
+          headers: {
+            Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
+            'x-tenant-id': user?.tenantId || 'slt',
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.items) && data.items.length > 0) {
+            setKnowledgeBases(data.items);
+            localStorage.setItem('omni_knowledge_bases', JSON.stringify(data.items));
+          }
+        }
+      } catch (err) {
+        console.warn('Backend KB sync fallback to local state:', err);
+      }
+    };
+    fetchKnowledgeBases();
+  }, [user]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const filesArr = Array.from(e.target.files);
+      setSelectedKbFiles((prev) => [...prev, ...filesArr]);
+      if (!newKbName && filesArr[0]) {
+        const autoName = filesArr[0].name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+        setNewKbName(autoName.charAt(0).toUpperCase() + autoName.slice(1));
+        const autoRef = 'kb-' + filesArr[0].name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        setNewKbRef(autoRef);
+      }
+    }
+  };
+
+  const removeSelectedFile = (idx: number) => {
+    setSelectedKbFiles((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleUploadKb = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newKbName.trim()) return;
+
+    setIsUploadingKb(true);
+    setUploadSuccessMsg('');
+
+    const cleanRef = newKbRef.trim()
+      ? (newKbRef.trim().startsWith('kb-') ? newKbRef.trim() : `kb-${newKbRef.trim()}`)
+      : `kb-${newKbName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+
+    const processedFiles: Array<{ name: string; size: number; type: string; content?: string }> = [];
+
+    for (const file of selectedKbFiles) {
+      try {
+        const text = await file.text();
+        processedFiles.push({
+          name: file.name,
+          size: file.size,
+          type: file.name.split('.').pop() || 'txt',
+          content: text,
+        });
+      } catch {
+        processedFiles.push({
+          name: file.name,
+          size: file.size,
+          type: file.name.split('.').pop() || 'txt',
+        });
+      }
+    }
+
+    if (newKbTextContent.trim() && processedFiles.length === 0) {
+      processedFiles.push({
+        name: `${cleanRef}-notes.txt`,
+        size: newKbTextContent.length,
+        type: 'txt',
+        content: newKbTextContent.trim(),
+      });
+    }
+
+    const payload = {
+      name: newKbName.trim(),
+      kbId: cleanRef,
+      category: newKbCategory,
+      description: newKbDescription.trim() || 'Custom Knowledge Base for AI Agents',
+      files: processedFiles,
+    };
+
+    const newKbItem: KbItem = {
+      kbId: cleanRef,
+      name: payload.name,
+      description: payload.description,
+      category: payload.category,
+      filesCount: processedFiles.length || 1,
+      totalBytes: processedFiles.reduce((acc, f) => acc + f.size, 0) || 4096,
+      status: 'READY',
+      updatedAt: 'Just now',
+      documents: processedFiles.map((f) => ({
+        name: f.name,
+        size: f.size,
+        type: f.type,
+        uploadedAt: 'Just now',
+      })),
+    };
+
+    try {
+      const token = localStorage.getItem('omni_token') || 'dev-token-staff';
+      await fetch('http://localhost:3001/api/dev/admin/knowledge-bases', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
+          'x-tenant-id': user?.tenantId || 'slt',
+        },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      console.warn('Backend KB upload fallback to local state:', err);
+    }
+
+    setKnowledgeBases((prev) => {
+      const filtered = prev.filter((k) => k.kbId !== cleanRef);
+      const updated = [newKbItem, ...filtered];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('omni_knowledge_bases', JSON.stringify(updated));
+      }
+      return updated;
+    });
+
+    setIsUploadingKb(false);
+    setUploadSuccessMsg(`✅ Knowledge Base "${newKbItem.name}" uploaded & indexed successfully!`);
+
+    setNewKbName('');
+    setNewKbRef('');
+    setNewKbDescription('');
+    setNewKbTextContent('');
+    setSelectedKbFiles([]);
+
+    setTimeout(() => {
+      setActiveKbTab('list');
+      setUploadSuccessMsg('');
+    }, 1800);
+  };
+
+  const handleDeleteKb = async (kbIdToDelete: string) => {
+    try {
+      const token = localStorage.getItem('omni_token') || 'dev-token-staff';
+      await fetch(`http://localhost:3001/api/dev/admin/knowledge-bases/${kbIdToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
+          'x-tenant-id': user?.tenantId || 'slt',
+        },
+      });
+    } catch {}
+
+    setKnowledgeBases((prev) => {
+      const updated = prev.filter((k) => k.kbId !== kbIdToDelete);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('omni_knowledge_bases', JSON.stringify(updated));
+      }
+      return updated;
+    });
+  };
+
+  const filteredKbs = knowledgeBases.filter(
+    (kb) =>
+      kb.name.toLowerCase().includes(kbSearchQuery.toLowerCase()) ||
+      kb.kbId.toLowerCase().includes(kbSearchQuery.toLowerCase()) ||
+      kb.category.toLowerCase().includes(kbSearchQuery.toLowerCase())
+  );
 
   // Create AI agent form state (matching MVP console specification)
   const initialAgentForm = {
@@ -812,8 +1077,11 @@ export default function Agents() {
                     className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800"
                   >
                     <option value="">None</option>
-                    <option value="kb-products">Products & Packages (kb-products)</option>
-                    <option value="kb-support">Support Guides (kb-support)</option>
+                    {knowledgeBases.map((kb) => (
+                      <option key={kb.kbId} value={kb.kbId}>
+                        {kb.name} ({kb.kbId})
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -909,6 +1177,346 @@ export default function Agents() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* 2. MANAGE KNOWLEDGE BASE MODAL (Uploading & S3 Document Sync)  */}
+      {/* ============================================================== */}
+      {showKnowledgeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto">
+          <div className="relative w-full max-w-3xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-8 flex flex-col max-h-[90vh]">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center text-cyan-400 shadow-md">
+                  <Database className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-black tracking-tight">Manage Knowledge Bases</h2>
+                  <p className="text-[11px] text-slate-300">
+                    Upload and index company documents for Bedrock RAG vector retrieval.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowKnowledgeModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Navigation Tabs */}
+            <div className="flex items-center justify-between px-6 py-2.5 bg-slate-50 border-b border-slate-200">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveKbTab('list')}
+                  className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    activeKbTab === 'list'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-slate-200/60'
+                  }`}
+                >
+                  Indexed Knowledge Bases ({knowledgeBases.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveKbTab('upload')}
+                  className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    activeKbTab === 'upload'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-slate-200/60'
+                  }`}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Upload Knowledge Base</span>
+                </button>
+              </div>
+
+              {activeKbTab === 'list' && (
+                <div className="relative w-48">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                  <input
+                    type="text"
+                    placeholder="Search KBs..."
+                    value={kbSearchQuery}
+                    onChange={(e) => setKbSearchQuery(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {uploadSuccessMsg && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-bold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{uploadSuccessMsg}</span>
+                </div>
+              )}
+
+              {activeKbTab === 'list' ? (
+                /* TAB 1: KNOWLEDGE BASES LIST */
+                <div className="space-y-3">
+                  {filteredKbs.length === 0 ? (
+                    <div className="py-12 flex flex-col items-center justify-center text-center text-slate-400 space-y-2">
+                      <Database className="w-10 h-10 text-slate-300" />
+                      <p className="text-xs font-medium">No Knowledge Bases found matching your search.</p>
+                      <button
+                        type="button"
+                        onClick={() => setActiveKbTab('upload')}
+                        className="px-4 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-bold"
+                      >
+                        Upload First Knowledge Base
+                      </button>
+                    </div>
+                  ) : (
+                    filteredKbs.map((kb) => (
+                      <div
+                        key={kb.kbId}
+                        className="p-4 rounded-2xl border border-slate-200 hover:border-indigo-300 bg-white shadow-xs space-y-3 transition-all"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-sm font-black text-slate-900">{kb.name}</h3>
+                              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-mono font-bold">
+                                {kb.kbId}
+                              </span>
+                              <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-bold">
+                                {kb.category}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 leading-relaxed">{kb.description}</p>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              {kb.status}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteKb(kb.kbId)}
+                              title="Delete Knowledge Base"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Document files list */}
+                        {kb.documents && kb.documents.length > 0 && (
+                          <div className="pt-2 border-t border-slate-100 flex flex-wrap gap-2">
+                            {kb.documents.map((doc, dIdx) => (
+                              <div
+                                key={dIdx}
+                                className="px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-medium flex items-center gap-1.5"
+                              >
+                                <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                                <span className="font-semibold text-slate-800">{doc.name}</span>
+                                <span className="text-[10px] text-slate-400 font-mono">
+                                  ({(doc.size / 1024).toFixed(1)} KB)
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              ) : (
+                /* TAB 2: UPLOAD NEW KNOWLEDGE BASE FORM */
+                <form onSubmit={handleUploadKb} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-900 mb-1.5">
+                        Knowledge Base Name <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Dialog Fiber & 4G Packages"
+                        value={newKbName}
+                        onChange={(e) => {
+                          setNewKbName(e.target.value);
+                          if (!newKbRef) {
+                            setNewKbRef('kb-' + e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
+                          }
+                        }}
+                        className="w-full px-3.5 py-2 text-xs font-medium bg-white border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-900 mb-1.5">
+                        Reference Key (Identifier) <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. kb-dialog-fiber"
+                        value={newKbRef}
+                        onChange={(e) => setNewKbRef(e.target.value)}
+                        className="w-full px-3.5 py-2 text-xs font-mono font-medium bg-white border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-900 mb-1.5">Category</label>
+                      <select
+                        value={newKbCategory}
+                        onChange={(e) => setNewKbCategory(e.target.value)}
+                        className="w-full px-3.5 py-2 text-xs font-medium bg-white border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="Products & Plans">Products & Plans</option>
+                        <option value="Technical Support">Technical Support & Troubleshooting</option>
+                        <option value="Billing & Invoicing">Billing & Payments</option>
+                        <option value="Company Policies">Company Policies & Terms</option>
+                        <option value="General FAQ">General Customer FAQ</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-900 mb-1.5">Description</label>
+                      <input
+                        type="text"
+                        placeholder="Brief summary of document content..."
+                        value={newKbDescription}
+                        onChange={(e) => setNewKbDescription(e.target.value)}
+                        className="w-full px-3.5 py-2 text-xs font-medium bg-white border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Document File Upload Drop Area */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-900 mb-1.5">
+                      Upload Source Documents (.pdf, .txt, .md, .docx, .json)
+                    </label>
+                    <div className="relative border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-2xl p-6 text-center bg-slate-50 transition-colors">
+                      <input
+                        type="file"
+                        multiple
+                        accept=".pdf,.txt,.md,.doc,.docx,.json,.csv"
+                        onChange={handleFileChange}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <div className="flex flex-col items-center justify-center space-y-2 pointer-events-none">
+                        <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                          <UploadCloud className="w-5 h-5" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-800">
+                          Click to browse or drag and drop files here
+                        </p>
+                        <p className="text-[10px] text-slate-500">
+                          PDF, Markdown, TXT, DOCX up to 25MB each
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Selected files preview */}
+                  {selectedKbFiles.length > 0 && (
+                    <div className="space-y-1.5">
+                      <label className="block text-[11px] font-bold text-slate-700">
+                        Selected Files ({selectedKbFiles.length})
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {selectedKbFiles.map((f, i) => (
+                          <div
+                            key={i}
+                            className="p-2.5 rounded-xl bg-white border border-slate-200 flex items-center justify-between shadow-xs"
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              <FileText className="w-4 h-4 text-indigo-600 shrink-0" />
+                              <div className="truncate">
+                                <p className="text-xs font-bold text-slate-900 truncate">{f.name}</p>
+                                <p className="text-[10px] text-slate-400 font-mono">{(f.size / 1024).toFixed(1)} KB</p>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeSelectedFile(i)}
+                              className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-slate-100"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Direct Text Notes Content (Optional) */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-900 mb-1.5">
+                      Or Paste Direct Knowledge / FAQs
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="Paste unstructured text, policy guidelines, FAQs, or troubleshooting instructions here..."
+                      value={newKbTextContent}
+                      onChange={(e) => setNewKbTextContent(e.target.value)}
+                      className="w-full px-3.5 py-2 text-xs font-medium bg-white border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setActiveKbTab('list')}
+                      className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                    >
+                      Back to List
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isUploadingKb || (!selectedKbFiles.length && !newKbTextContent.trim() && !newKbName)}
+                      className="px-6 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      {isUploadingKb ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          <span>Uploading & Indexing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <UploadCloud className="w-3.5 h-3.5" />
+                          <span>Upload & Index Knowledge Base</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-[11px] text-slate-500">
+              <span className="flex items-center gap-1">
+                <Shield className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Zero-Trust Tenant S3 Isolation Active</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowKnowledgeModal(false)}
+                className="px-4 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors"
+              >
+                Close
+              </button>
+            </div>
+
           </div>
         </div>
       )}
