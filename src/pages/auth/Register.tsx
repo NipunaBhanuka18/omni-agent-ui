@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Bot, Mail, Building2, Globe, User, Layers, Cpu, ArrowRight, Phone, Lock, MapPin, FileText, ChevronRight, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import ToastContainer, { type ToastMessage } from '@/components/Toast';
+import { useAuthStore } from '@/store/authStore';
 
 // ⭐ Defined OUTSIDE Register — prevents remounting on every keystroke
 // ⭐ inputClass does NOT take errors as param to avoid recreating on every render
@@ -35,6 +36,7 @@ function Field({
 
 export default function Register() {
   const navigate = useNavigate();
+  const login = useAuthStore((state) => state.login);
 
   const [step, setStep] = useState<1 | 2>(1);
   const [showPassword, setShowPassword] = useState(false);
@@ -130,11 +132,18 @@ export default function Register() {
           adminPhone: formData.adminPhone,
           industry: formData.companyType,
           password: formData.password,
+          autoApprove: true,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         addToast(data.error || data.message || 'Registration failed. Please check your details.', 'error');
+        return;
+      }
+      if (data.token && data.user) {
+        login(data.user, data.token);
+        addToast('Workspace created! Entering your workspace...', 'success');
+        navigate('/dashboard');
         return;
       }
       navigate('/register-success');
