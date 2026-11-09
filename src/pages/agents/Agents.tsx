@@ -407,21 +407,26 @@ export default function Agents() {
           {/* AI Agent Fleet Cards Grid */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-black text-slate-900">AI Agent Fleet</h3>
+              <div className="flex items-center gap-2.5">
+                <h3 className="text-base font-black text-white tracking-wide">AI Agent Fleet</h3>
+                <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-bold border border-indigo-500/30">
+                  {agentFleet.length} Configured
+                </span>
+              </div>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => {
                     setCreateAgentForm(initialAgentForm);
                     setShowCreateAgentModal(true);
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
+                  className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md flex items-center gap-1.5 transition-all"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Create Agent</span>
                 </button>
                 <button
                   onClick={() => setShowKnowledgeModal(true)}
-                  className="text-xs font-bold text-purple-600 hover:underline"
+                  className="text-xs font-bold text-indigo-400 hover:text-indigo-300 hover:underline"
                 >
                   Manage Knowledge Base
                 </button>
