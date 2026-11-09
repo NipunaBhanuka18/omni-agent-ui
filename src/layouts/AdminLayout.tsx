@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   Sparkles,
+  Headset,
 } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import ChatBotWidget from "../components/ChatBotWidget";
@@ -37,6 +38,7 @@ export default function AdminLayout() {
 
   const companyNavItems = [
     { name: "Dash-Board", path: "/dashboard", icon: LayoutGrid },
+    { name: "Live Agent Console", path: "/live-agent", icon: Headset },
     { name: "Live ChatBot", path: "/chat", icon: MessageSquare },
     { name: "Manage Customers", path: "/users", icon: Users },
     { name: "API", path: "/api", icon: Code2 },
@@ -48,6 +50,7 @@ export default function AdminLayout() {
 
   const adminNavItems = [
     { name: "Super Admin Dashboard", path: "/admin/dashboard", icon: LayoutGrid },
+    { name: "Live Agent Console", path: "/live-agent", icon: Headset },
     { name: "Live ChatBot", path: "/admin/chat", icon: MessageSquare },
     { name: "Organization Mgmt", path: "/admin/organizations", icon: Building2 },
     { name: "API Management", path: "/admin/api", icon: Code2 },

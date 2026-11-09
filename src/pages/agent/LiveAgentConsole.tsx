@@ -28,6 +28,16 @@ export default function LiveAgentConsole() {
   const [presenceLoading, setPresenceLoading] = useState(false);
   const [sessions, setSessions] = useState<ChatSession[]>([
     {
+      id: 'sess-dialog-001',
+      customerName: 'Dialog Customer (Web)',
+      channel: 'web',
+      tenantId: user?.tenantId || 'slt',
+      lastMessage: 'I need to connect with a live agent, a human agent please.',
+      timestamp: 'Just now',
+      status: 'QUEUED',
+      unreadCount: 1,
+    },
+    {
       id: 'sess-001',
       customerName: 'Kamal Perera',
       channel: 'web',
@@ -49,8 +59,13 @@ export default function LiveAgentConsole() {
     },
   ]);
 
-  const [activeSessionId, setActiveSessionId] = useState<string>('sess-001');
+  const [activeSessionId, setActiveSessionId] = useState<string>('sess-dialog-001');
   const [messagesMap, setMessagesMap] = useState<Record<string, ChatMessage[]>>({
+    'sess-dialog-001': [
+      { id: 'm-d1', sender: 'customer', text: 'I need to connect with a live agent, a human agent please.', timestamp: '11:31 AM' },
+      { id: 'm-d2', sender: 'system', text: '[Billing Specialist]: Account SLT-9982-555 balance is LKR 1500.5. Due Date: 2026-09-15.', timestamp: '11:31 AM' },
+      { id: 'm-d3', sender: 'system', text: 'Escalation triggered by Customer. Session assigned to Live Agent Queue.', timestamp: '11:31 AM' },
+    ],
     'sess-001': [
       { id: 'm-1', sender: 'customer', text: 'Hello, the AI bot referred me to a human agent.', timestamp: '10:14 AM' },
       { id: 'm-2', sender: 'system', text: 'Escalation triggered by Customer. Session assigned to Live Agent Queue.', timestamp: '10:15 AM' },
@@ -65,6 +80,41 @@ export default function LiveAgentConsole() {
   const [inputText, setInputText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Sync handoffs & messages with localStorage and backend
+  useEffect(() => {
+    const syncFromStorage = () => {
+      try {
+        const storedHandoffs = JSON.parse(localStorage.getItem('omni_active_handoffs') || '[]');
+        if (storedHandoffs && storedHandoffs.length > 0) {
+          setSessions((prev) => {
+            const existingMap = new Map(prev.map((s) => [s.id, s]));
+            for (const item of storedHandoffs) {
+              existingMap.set(item.id, item);
+            }
+            return Array.from(existingMap.values());
+          });
+        }
+        const storedMessages = JSON.parse(localStorage.getItem('omni_handoff_messages') || '{}');
+        if (Object.keys(storedMessages).length > 0) {
+          setMessagesMap((prev) => ({
+            ...prev,
+            ...storedMessages,
+          }));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    syncFromStorage();
+    const interval = setInterval(syncFromStorage, 2000);
+    window.addEventListener('storage', syncFromStorage);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', syncFromStorage);
+    };
+  }, []);
 
   const activeSession = sessions.find((s) => s.id === activeSessionId) || sessions[0];
   const currentMessages = messagesMap[activeSessionId] || [];
@@ -105,9 +155,11 @@ export default function LiveAgentConsole() {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
+    const updatedMessages = [...(messagesMap[activeSessionId] || []), newMsg];
+
     setMessagesMap((prev) => ({
       ...prev,
-      [activeSessionId]: [...(prev[activeSessionId] || []), newMsg],
+      [activeSessionId]: updatedMessages,
     }));
 
     setSessions((prev) =>
@@ -115,6 +167,21 @@ export default function LiveAgentConsole() {
         s.id === activeSessionId ? { ...s, lastMessage: inputText.trim(), status: 'ACTIVE' } : s
       )
     );
+
+    // Save to localStorage for bidirectional live sync with HostedChatWidget
+    try {
+      const storedMap = JSON.parse(localStorage.getItem('omni_handoff_messages') || '{}');
+      storedMap[activeSessionId] = updatedMessages;
+      localStorage.setItem('omni_handoff_messages', JSON.stringify(storedMap));
+
+      const storedHandoffs = JSON.parse(localStorage.getItem('omni_active_handoffs') || '[]');
+      const updatedHandoffs = storedHandoffs.map((s: ChatSession) =>
+        s.id === activeSessionId ? { ...s, lastMessage: inputText.trim(), status: 'ACTIVE' } : s
+      );
+      localStorage.setItem('omni_active_handoffs', JSON.stringify(updatedHandoffs));
+    } catch (e) {
+      console.error(e);
+    }
 
     const sentText = inputText;
     setInputText('');
@@ -127,6 +194,21 @@ export default function LiveAgentConsole() {
       });
     } catch {
       // Request sent in simulation mode
+    }
+  };
+
+  const handleResolveSession = (sessionIdToResolve: string) => {
+    setSessions((prev) =>
+      prev.map((s) => (s.id === sessionIdToResolve ? { ...s, status: 'RESOLVED' } : s))
+    );
+    try {
+      const storedHandoffs = JSON.parse(localStorage.getItem('omni_active_handoffs') || '[]');
+      const updatedHandoffs = storedHandoffs.map((s: ChatSession) =>
+        s.id === sessionIdToResolve ? { ...s, status: 'RESOLVED' } : s
+      );
+      localStorage.setItem('omni_active_handoffs', JSON.stringify(updatedHandoffs));
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -253,11 +335,7 @@ export default function LiveAgentConsole() {
                 </div>
 
                 <button
-                  onClick={() => {
-                    setSessions((prev) =>
-                      prev.map((s) => (s.id === activeSessionId ? { ...s, status: 'RESOLVED' } : s))
-                    );
-                  }}
+                  onClick={() => handleResolveSession(activeSessionId)}
                   className="px-3.5 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold border border-emerald-300 transition-colors"
                 >
                   Mark Session Resolved

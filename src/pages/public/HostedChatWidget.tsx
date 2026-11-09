@@ -82,6 +82,46 @@ export default function HostedChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isSending]);
 
+  // Listen for Live Agent replies when escalated
+  useEffect(() => {
+    if (!isEscalated) return;
+    const sessId = 'sess-dialog-001';
+
+    const checkAgentMessages = () => {
+      try {
+        const storedMap = JSON.parse(localStorage.getItem('omni_handoff_messages') || '{}');
+        const sessionMsgs = storedMap[sessId] || [];
+        const agentReplies = sessionMsgs.filter((m: any) => m.sender === 'agent');
+        if (agentReplies.length > 0) {
+          setMessages((prev) => {
+            const existingTexts = new Set(prev.map((p) => p.text));
+            const newAgentMsgs = agentReplies
+              .filter((ar: any) => !existingTexts.has(`[Live Agent]: ${ar.text}`))
+              .map((ar: any) => ({
+                id: ar.id || `ag-${Date.now()}`,
+                sender: 'bot' as const,
+                text: `[Live Agent]: ${ar.text}`,
+                timestamp: ar.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              }));
+            if (newAgentMsgs.length > 0) {
+              return [...prev, ...newAgentMsgs];
+            }
+            return prev;
+          });
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    const interval = setInterval(checkAgentMessages, 1500);
+    window.addEventListener('storage', checkAgentMessages);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', checkAgentMessages);
+    };
+  }, [isEscalated]);
+
   // 2. Handle Send Customer Query
   const handleSendQuery = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -97,6 +137,32 @@ export default function HostedChatWidget() {
     setMessages((prev) => [...prev, userMsg]);
     const text = inputText;
     setInputText('');
+
+    if (isEscalated) {
+      const sessId = 'sess-dialog-001';
+      try {
+        const storedMap = JSON.parse(localStorage.getItem('omni_handoff_messages') || '{}');
+        const list = storedMap[sessId] || [];
+        list.push({
+          id: userMsg.id,
+          sender: 'customer',
+          text: userMsg.text,
+          timestamp: userMsg.timestamp,
+        });
+        storedMap[sessId] = list;
+        localStorage.setItem('omni_handoff_messages', JSON.stringify(storedMap));
+
+        const storedHandoffs = JSON.parse(localStorage.getItem('omni_active_handoffs') || '[]');
+        const updated = storedHandoffs.map((s: any) =>
+          s.id === sessId ? { ...s, lastMessage: userMsg.text } : s
+        );
+        localStorage.setItem('omni_active_handoffs', JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return;
+    }
+
     setIsSending(true);
 
     try {
@@ -232,31 +298,72 @@ export default function HostedChatWidget() {
   // 4. Request Human Assistant Escalation (`POST /agent/handoff` or `POST /escalate`)
   const handleRequestHuman = async () => {
     setIsSending(true);
+    const sessId = 'sess-dialog-001';
+
     try {
-      await apiClient.post(
-        '/agent/handoff',
-        {
-          companySlug,
-          agentSlug,
-          reason: 'Customer requested human assistant escalation.',
+      await fetch('http://localhost:3001/api/chat/handoff/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': 'slt',
         },
-        { tenantId: agentInfo.tenantId }
-      );
+        body: JSON.stringify({
+          sessionId: sessId,
+          customerName: `${agentInfo.name.replace('Assistant', '').trim()} Web Customer`,
+          issueSummary: messages[messages.length - 1]?.text || 'Customer requested human assistant escalation.',
+        }),
+      });
     } catch {
       // Simulation mode handoff trigger
-    } finally {
-      setIsEscalated(true);
-      setIsSending(false);
-      setMessages((prev) => [
-        ...prev,
+    }
+
+    const escalatedSession = {
+      id: sessId,
+      customerName: `${agentInfo.name.replace('Assistant', '').trim()} Web Customer`,
+      channel: 'web' as const,
+      tenantId: agentInfo.tenantId || 'slt',
+      lastMessage: messages[messages.length - 1]?.text || 'I need to connect with a live agent, a human agent please.',
+      timestamp: 'Just now',
+      status: 'QUEUED' as const,
+      unreadCount: 1,
+    };
+
+    try {
+      const existing = JSON.parse(localStorage.getItem('omni_active_handoffs') || '[]');
+      const filtered = existing.filter((s: any) => s.id !== sessId);
+      localStorage.setItem('omni_active_handoffs', JSON.stringify([escalatedSession, ...filtered]));
+
+      const storedMap = JSON.parse(localStorage.getItem('omni_handoff_messages') || '{}');
+      storedMap[sessId] = [
+        ...messages.map((m) => ({
+          id: m.id,
+          sender: m.sender === 'user' ? 'customer' : m.sender === 'system' ? 'system' : 'agent',
+          text: m.text,
+          timestamp: m.timestamp,
+        })),
         {
           id: `sys-${Date.now()}`,
           sender: 'system',
-          text: '🎧 Human Assistant Escalation Requested. A Live Agent is joining your chat session shortly...',
+          text: 'Escalation triggered by Customer. Session assigned to Live Agent Queue.',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
-      ]);
+      ];
+      localStorage.setItem('omni_handoff_messages', JSON.stringify(storedMap));
+    } catch (e) {
+      console.error(e);
     }
+
+    setIsEscalated(true);
+    setIsSending(false);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `sys-${Date.now()}`,
+        sender: 'system',
+        text: '🎧 Human Assistant Escalation Requested. A Live Agent is joining your chat session shortly...',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      },
+    ]);
   };
 
   return (
