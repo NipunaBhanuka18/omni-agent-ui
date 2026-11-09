@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bot, Shield, Play, Terminal, Cpu, Database, CheckCircle2, AlertTriangle, RefreshCw, Send, Plus, ArrowLeft, Building2, X } from 'lucide-react';
+import { Bot, Shield, Play, Terminal, Cpu, Database, CheckCircle2, AlertTriangle, RefreshCw, Send, Plus, ArrowLeft, Building2, X, ExternalLink } from 'lucide-react';
 import Button from '@/components/Button';
 import InputField from '@/components/InputField';
 import { apiClient } from '@/api/apiClient';
@@ -512,6 +512,18 @@ export default function Agents() {
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>Publish</span>
                         </button>
+                      )}
+                      {agent.publicAgentKey && (
+                        <a
+                          href={`/chat/dialog/${agent.publicAgentKey}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 rounded-xl border border-indigo-200 hover:border-indigo-400 bg-indigo-50/70 hover:bg-indigo-100 text-indigo-700 font-bold text-xs shadow-xs flex items-center gap-1 transition-all"
+                          title="Open standalone public chat link in a new browser tab"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Chat Link</span>
+                        </a>
                       )}
                       <button
                         onClick={() => {
