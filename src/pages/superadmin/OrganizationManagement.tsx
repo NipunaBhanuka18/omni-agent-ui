@@ -9,13 +9,11 @@ const API = 'http://localhost:3001';
 
 export default function OrganizationManagement() {
   const [activeTab, setActiveTab] = useState<'tech' | 'finance' | 'edu' | 'healthcare' | 'manufacturing' | 'other'>('tech');
-  const [viewMode, setViewMode] = useState<'active' | 'requests' | 'detail'>('active');
+  const [viewMode, setViewMode] = useState<'active' | 'detail'>('active');
   const [selectedOrg, setSelectedOrg] = useState<any>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingOrg, setDeletingOrg] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [requestsList, setRequestsList] = useState<any[]>([]);
-  const [loadingRequests, setLoadingRequests] = useState(false);
 
   // Toasts state
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -28,8 +26,58 @@ export default function OrganizationManagement() {
   };
 
   const initialCompaniesByIndustry: Record<string, any[]> = {
-    tech: [],
-    finance: [],
+    tech: [
+      {
+        id: 'comp-dialog',
+        name: 'Dialog Axiata PLC',
+        email: 'admin@dialog.lk',
+        adminName: 'Dialog Admin',
+        status: 'ACTIVE',
+        lastLogin: 'Today, 11:30 AM',
+        industry: 'Telecommunications & Tech',
+        phone: '+94 77 733 3333',
+        location: 'Colombo, Sri Lanka',
+        website: 'www.dialog.lk',
+      },
+      {
+        id: 'comp-slt',
+        name: 'SLT Global (Telecom PLC)',
+        email: 'admin@slt.lk',
+        adminName: 'SLT Admin',
+        status: 'ACTIVE',
+        lastLogin: 'Today, 09:15 AM',
+        industry: 'Telecommunications & Tech',
+        phone: '+94 11 202 1000',
+        location: 'Colombo, Sri Lanka',
+        website: 'www.slt.lk',
+      },
+      {
+        id: 'comp-apex',
+        name: 'ABC Company (pvt) Ltd',
+        email: 'admin@abccompany.com',
+        adminName: 'Apex Staff',
+        status: 'ACTIVE',
+        lastLogin: 'Yesterday',
+        industry: 'Enterprise Software',
+        phone: '+94 11 555 8899',
+        location: 'Colombo, Sri Lanka',
+        website: 'www.abccompany.com',
+      },
+    ],
+    finance: [
+      {
+        id: 'comp-combank',
+        name: 'Commercial Bank PLC',
+        email: 'contact@combank.net',
+        adminName: 'Bank Admin',
+        status: 'ACTIVE',
+        lastLogin: '2 days ago',
+        industry: 'Banking & Finance',
+        phone: '+94 11 244 8448',
+        location: 'Colombo, Sri Lanka',
+        website: 'www.combank.lk',
+      },
+    ],
     edu: [],
     healthcare: [],
     manufacturing: [],
@@ -38,36 +86,78 @@ export default function OrganizationManagement() {
 
   const [companies, setCompanies] = useState<Record<string, any[]>>(initialCompaniesByIndustry);
 
-  // Fetch registrations from backend (pending & approved)
-  const fetchRequests = async () => {
-    setLoadingRequests(true);
+  // Fetch active company workspaces from backend
+  const fetchCompanies = async () => {
     try {
       const rawToken = (typeof window !== 'undefined' && localStorage.getItem('omni_token')) || '';
       const authHeader = rawToken ? (rawToken.startsWith('Bearer ') ? rawToken : `Bearer ${rawToken}`) : '';
       const headers: Record<string, string> = authHeader ? { Authorization: authHeader } : {};
 
-      // Fetch pending requests
-      const resPending = await fetch(`${API}/api/registrations?status=pending`, { headers });
-      const pendingData = await resPending.json();
-      const pendingList = Array.isArray(pendingData) ? pendingData : (pendingData.registrations || []);
-      setRequestsList(pendingList);
-
-      // Fetch approved registrations & add to active companies
-      const resApproved = await fetch(`${API}/api/registrations?status=approved`, { headers });
-      const approvedData = await resApproved.json();
-      const approvedList = Array.isArray(approvedData) ? approvedData : (approvedData.registrations || []);
+      const res = await fetch(`${API}/api/registrations`, { headers });
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : (data.registrations || []);
 
       const freshCompanies: Record<string, any[]> = {
-        tech: [],
-        finance: [],
+        tech: [
+          {
+            id: 'comp-dialog',
+            name: 'Dialog Axiata PLC',
+            email: 'admin@dialog.lk',
+            adminName: 'Dialog Admin',
+            status: 'ACTIVE',
+            lastLogin: 'Today, 11:30 AM',
+            industry: 'Telecommunications & Tech',
+            phone: '+94 77 733 3333',
+            location: 'Colombo, Sri Lanka',
+            website: 'www.dialog.lk',
+          },
+          {
+            id: 'comp-slt',
+            name: 'SLT Global (Telecom PLC)',
+            email: 'admin@slt.lk',
+            adminName: 'SLT Admin',
+            status: 'ACTIVE',
+            lastLogin: 'Today, 09:15 AM',
+            industry: 'Telecommunications & Tech',
+            phone: '+94 11 202 1000',
+            location: 'Colombo, Sri Lanka',
+            website: 'www.slt.lk',
+          },
+          {
+            id: 'comp-apex',
+            name: 'ABC Company (pvt) Ltd',
+            email: 'admin@abccompany.com',
+            adminName: 'Apex Staff',
+            status: 'ACTIVE',
+            lastLogin: 'Yesterday',
+            industry: 'Enterprise Software',
+            phone: '+94 11 555 8899',
+            location: 'Colombo, Sri Lanka',
+            website: 'www.abccompany.com',
+          },
+        ],
+        finance: [
+          {
+            id: 'comp-combank',
+            name: 'Commercial Bank PLC',
+            email: 'contact@combank.net',
+            adminName: 'Bank Admin',
+            status: 'ACTIVE',
+            lastLogin: '2 days ago',
+            industry: 'Banking & Finance',
+            phone: '+94 11 244 8448',
+            location: 'Colombo, Sri Lanka',
+            website: 'www.combank.lk',
+          },
+        ],
         edu: [],
         healthcare: [],
         manufacturing: [],
         other: [],
       };
 
-      if (Array.isArray(approvedList) && approvedList.length > 0) {
-        approvedList.forEach((req: any) => {
+      if (Array.isArray(list) && list.length > 0) {
+        list.forEach((req: any) => {
           const rawInd = (req.industry || req.companyType || 'tech').toLowerCase();
           let targetTab = 'tech';
           if (rawInd.includes('finance')) targetTab = 'finance';
@@ -83,97 +173,27 @@ export default function OrganizationManagement() {
             email: req.companyEmail || req.email,
             adminName: req.adminName || 'Admin',
             status: 'ACTIVE',
-            lastLogin: 'Approved',
+            lastLogin: 'Active',
             industry: req.industry || req.companyType || 'Technology',
             phone: req.phone || req.adminPhone || '-',
             location: req.city || req.country || 'Sri Lanka',
             website: req.website || '-',
           };
 
-          freshCompanies[targetTab].push(compObj);
+          if (!freshCompanies[targetTab].some((c) => c.name.toLowerCase() === compObj.name.toLowerCase())) {
+            freshCompanies[targetTab].push(compObj);
+          }
         });
       }
       setCompanies(freshCompanies);
     } catch {
       console.warn('Backend not reachable');
-      setRequestsList([]);
-      setCompanies({ tech: [], finance: [], edu: [], healthcare: [], manufacturing: [], other: [] });
-    } finally {
-      setLoadingRequests(false);
     }
   };
 
   useEffect(() => {
-    fetchRequests();
+    fetchCompanies();
   }, []);
-
-  const handleApprove = async (id: number, req: any) => {
-    const companyName = req.companyName || req.name;
-    const rawToken = (typeof window !== 'undefined' && localStorage.getItem('omni_token')) || '';
-    const authHeader = rawToken ? (rawToken.startsWith('Bearer ') ? rawToken : `Bearer ${rawToken}`) : '';
-    try {
-      await fetch(`${API}/api/registrations/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(authHeader ? { Authorization: authHeader } : {}),
-        },
-        body: JSON.stringify({ status: 'approved' }),
-      });
-    } catch {
-      console.warn('Backend offline, updating local state only');
-    }
-
-    setRequestsList((prev) => prev.filter((r) => r.id !== id));
-
-    const rawInd = (req.industry || req.companyType || 'tech').toLowerCase();
-    let targetTab = 'tech';
-    if (rawInd.includes('finance')) targetTab = 'finance';
-    else if (rawInd.includes('edu')) targetTab = 'edu';
-    else if (rawInd.includes('health')) targetTab = 'healthcare';
-    else if (rawInd.includes('manuf')) targetTab = 'manufacturing';
-    else if (rawInd.includes('tech')) targetTab = 'tech';
-    else targetTab = 'other';
-
-    const newCompany = {
-      id: req.id || Date.now(),
-      name: req.companyName || req.name,
-      email: req.companyEmail || req.email,
-      adminName: req.adminName || 'Admin',
-      status: 'ACTIVE',
-      lastLogin: 'Just approved',
-      industry: req.industry || req.companyType || 'Technology',
-      phone: req.phone || req.adminPhone || '-',
-      location: req.city || req.country || 'Sri Lanka',
-      website: req.website || '-',
-    };
-
-    setCompanies((prev) => ({
-      ...prev,
-      [targetTab]: [newCompany, ...(prev[targetTab] || []).filter((c: any) => c.id !== newCompany.id)],
-    }));
-
-    // Auto switch viewMode to active and targetTab to show newly approved company
-    setViewMode('active');
-    setActiveTab(targetTab as any);
-
-    addToast(`Approved: "${companyName}"! Company is now ACTIVE under ${targetTab.toUpperCase()}.`, 'success');
-  };
-
-  const handleReject = async (id: number, companyName: string) => {
-    try {
-      await fetch(`${API}/api/registrations/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'rejected' }),
-      });
-    } catch {
-      console.warn('Backend offline, updating local state only');
-    }
-
-    setRequestsList((prev) => prev.filter((r) => r.id !== id));
-    addToast(`Rejected registration request for: "${companyName}".`, 'info');
-  };
 
   const currentCompanies = companies[activeTab] || [];
 
@@ -205,7 +225,7 @@ export default function OrganizationManagement() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Organization Management</h1>
-          <p className="text-xs text-slate-500 mt-0.5">Configure user access, roles, and review new registration requests.</p>
+          <p className="text-xs text-slate-500 mt-0.5">Configure and manage active company workspaces, user access, and roles.</p>
         </div>
 
         <button
@@ -269,120 +289,10 @@ export default function OrganizationManagement() {
         </button>
       </div>
 
-      {/* View Switcher: Company Registration Requests Pill & Active Company Container */}
+      {/* Active Company Container */}
       {viewMode !== 'detail' && (
         <div className="space-y-4">
-          
-          {/* Top Requests Pill Button */}
-          <div
-            onClick={() => setViewMode(viewMode === 'requests' ? 'active' : 'requests')}
-            className="p-3.5 rounded-2xl bg-purple-100 border border-purple-200 flex items-center gap-3 cursor-pointer hover:bg-purple-200/60 transition-all w-fit shadow-xs"
-          >
-            <Building2 className="w-5 h-5 text-purple-700" />
-            <span className="text-xs font-black text-purple-900">Company Registration Requests</span>
-            <span className="w-6 h-6 rounded-full bg-purple-700 text-white font-black text-xs flex items-center justify-center">
-              {requestsList.length}
-            </span>
-          </div>
-
-          {/* ===== REQUESTS VIEW ===== */}
-          {viewMode === 'requests' && (
-            <div className="bg-white p-6 rounded-3xl border border-purple-100 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-purple-100">
-                    <Clock className="w-4 h-4 text-purple-700" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900">Pending Registration Requests</h3>
-                    <p className="text-[10px] text-slate-400 font-medium">Review and approve or reject new company registrations</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setViewMode('active')}
-                  className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50"
-                >
-                  ✕ Close
-                </button>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="bg-purple-50 text-purple-900 font-bold uppercase tracking-wider">
-                      <th className="py-3 px-4 rounded-l-xl">Company</th>
-                      <th className="py-3 px-4">Admin Contact</th>
-                      <th className="py-3 px-4">Industry</th>
-                      <th className="py-3 px-4">Requested Date</th>
-                      <th className="py-3 px-4 text-center rounded-r-xl">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                    {requestsList.map((req) => (
-                      <tr key={req.id} className="hover:bg-slate-50">
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white font-black text-sm flex items-center justify-center shrink-0">
-                              {req.companyName.charAt(0)}
-                            </div>
-                            <div>
-                              <span className="block font-black text-slate-900">{req.companyName}</span>
-                              <span className="text-[10px] font-mono text-slate-400">{req.email}</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="block font-semibold text-slate-800">{req.adminName}</span>
-                          <span className="text-[10px] text-slate-400 font-mono">{req.email}</span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-800 font-bold text-[10px]">
-                            {req.industry}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4 font-mono text-slate-500">{req.date}</td>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => handleApprove(req.id, req)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-[10px] shadow-sm transition-all cursor-pointer"
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleReject(req.id, req.companyName || req.name)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-[10px] shadow-sm transition-all cursor-pointer"
-                            >
-                              <XCircle className="w-3.5 h-3.5" />
-                              Reject
-                            </button>
-                            <button
-                              onClick={() => handleOpenDetail({ ...req, name: req.companyName, status: 'PENDING', lastLogin: 'N/A', website: '-', location: '-', phone: '-' })}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all"
-                              title="View Details"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {requestsList.length === 0 && (
-                <div className="text-center py-12 space-y-3">
-                  <UserCheck className="w-10 h-10 text-slate-300 mx-auto" />
-                  <span className="text-xs font-bold text-slate-400 block">No Pending Requests</span>
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Active Company Table Card */}
-          {viewMode === 'active' && (
           <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6">
             
             <div className="flex items-center justify-between">
@@ -503,7 +413,6 @@ export default function OrganizationManagement() {
             </div>
 
           </div>
-          )}
 
           {/* Bottom Stats Banner */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">

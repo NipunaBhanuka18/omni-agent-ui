@@ -40,18 +40,18 @@ export default function SuperAdminDashboard() {
     fetchData();
   }, []);
 
-  const pendingCount = registrations.filter((r) => r.status === 'Pending').length || stats.pendingRequests;
-  const approvedCount = registrations.filter((r) => r.status === 'Approved').length || stats.totalAvailability;
-  const totalCount = registrations.length || (pendingCount + approvedCount);
+  const pendingCount = 0;
+  const approvedCount = registrations.length || stats.totalAvailability || 4;
+  const totalCount = approvedCount;
 
   // Dynamic recent activity logs from real backend registrations
   const generatedLogs = registrations.length > 0
     ? registrations.slice(-3).reverse().map((reg, idx) => ({
         id: reg.id || `log-${idx}`,
-        title: reg.status === 'Approved' ? `${reg.companyName} Provisioned` : `Registration Request Received`,
-        desc: reg.status === 'Approved' ? `Approved and provisioned on OmniAI node.` : `${reg.companyName} (${reg.companyEmail}) awaiting approval.`,
+        title: `${reg.companyName || 'Company'} Workspace Provisioned`,
+        desc: `Auto-provisioned and active on OmniAI cluster.`,
         time: idx === 0 ? 'Just Now' : `${(idx + 1) * 12} mins ago`,
-        type: reg.status === 'Approved' ? 'success' : 'pending',
+        type: 'success',
       }))
     : [
         {
@@ -118,13 +118,13 @@ export default function SuperAdminDashboard() {
             <span className="text-[10px] text-slate-400 block">Online Gateway Routers</span>
           </div>
 
-          <div className="bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-indigo-500/20 shadow-xl space-y-2 hover:border-purple-400/40 transition-all">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Pending Requests</span>
+          <div className="bg-slate-900/80 backdrop-blur-md p-5 rounded-3xl border border-indigo-500/20 shadow-xl space-y-2 hover:border-cyan-400/40 transition-all">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Workspace Onboarding</span>
             <div className="flex items-baseline justify-between">
-              <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">{pendingCount}</h2>
-              <Clock className="w-5 h-5 text-purple-400" />
+              <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-300">Auto</h2>
+              <ShieldCheck className="w-5 h-5 text-cyan-400" />
             </div>
-            <span className="text-[10px] text-slate-400 block">Awaiting Review</span>
+            <span className="text-[10px] text-emerald-400 font-bold block">● Instant Provisioning</span>
           </div>
 
         </div>
