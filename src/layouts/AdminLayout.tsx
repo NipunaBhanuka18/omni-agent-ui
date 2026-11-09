@@ -28,8 +28,69 @@ export default function AdminLayout() {
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchContainerRef = React.useRef<HTMLDivElement>(null);
 
   const isAdminMode = location.pathname.startsWith("/admin");
+
+  // Close search dropdown on click outside
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Global searchable index
+  const searchItems = React.useMemo(() => {
+    const items = [
+      // Pages
+      { title: "Dashboard", category: "Pages", path: isAdminMode ? "/admin/dashboard" : "/dashboard", icon: LayoutGrid, desc: "Real-time metrics & analytics" },
+      { title: "Live Agent Console", category: "Pages", path: "/live-agent", icon: Headset, desc: "Customer conversations & human handoff queues" },
+      { title: "Live ChatBot Playground", category: "Pages", path: isAdminMode ? "/admin/chat" : "/chat", icon: MessageSquare, desc: "Interactive customer chat interface" },
+      { title: "AI Agents Fleet", category: "AI Agents", path: isAdminMode ? "/admin/agents" : "/agents", icon: Bot, desc: "Manage and configure specialist AI agents" },
+      { title: "Tools & Forms", category: "Tools", path: isAdminMode ? "/admin/tools" : "/tools", icon: Command, desc: "APIs, AgentCore MCP tools, and forms" },
+      { title: "Channels Management", category: "Pages", path: isAdminMode ? "/admin/channels" : "/channels", icon: SlidersHorizontal, desc: "WhatsApp, Messenger, SMS, and Web" },
+      { title: "API Management", category: "Pages", path: isAdminMode ? "/admin/api" : "/api", icon: Code2, desc: "Access keys and developer webhook integrations" },
+      { title: "Settings & Profile", category: "Pages", path: isAdminMode ? "/admin/settings" : "/settings", icon: Settings, desc: "Account preferences and configurations" },
+
+      // AI Agents
+      { title: "Omni Customer Assistant", category: "AI Agents", path: isAdminMode ? "/admin/agents" : "/agents", icon: Bot, desc: "amazon.nova-lite-v1:0 customer agent" },
+      { title: "Nexus-1 Support Bot", category: "AI Agents", path: isAdminMode ? "/admin/agents" : "/agents", icon: Bot, desc: "SLT-LLM-v3.0 + RAG customer support agent" },
+      { title: "Sentinel Guard", category: "AI Agents", path: isAdminMode ? "/admin/agents" : "/agents", icon: Bot, desc: "SLT-Guard-v1.5 security validation bot" },
+
+      // Tools & Forms
+      { title: "Create support ticket", category: "Tools", path: isAdminMode ? "/admin/tools" : "/tools", icon: Command, desc: "AgentCore MCP gateway action" },
+      { title: "Check order status", category: "Tools", path: isAdminMode ? "/admin/tools" : "/tools", icon: Command, desc: "REST API order verification" },
+      { title: "Sales interest form", category: "Tools", path: isAdminMode ? "/admin/tools" : "/tools", icon: Command, desc: "Inline customer interest capture form" },
+    ];
+
+    if (isAdminMode) {
+      items.push(
+        { title: "Organization Management", category: "Workspaces", path: "/admin/organizations", icon: Building2, desc: "Manage registered tenant companies" },
+        { title: "Dialog Axiata PLC", category: "Workspaces", path: "/admin/organizations", icon: Building2, desc: "Active company workspace" },
+        { title: "SLT Global (Telecom PLC)", category: "Workspaces", path: "/admin/organizations", icon: Building2, desc: "Active host company workspace" },
+        { title: "ABC Company (pvt) Ltd", category: "Workspaces", path: "/admin/organizations", icon: Building2, desc: "Active enterprise company workspace" }
+      );
+    }
+
+    return items;
+  }, [isAdminMode]);
+
+  const searchResults = React.useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return searchItems.filter(
+      (item) =>
+        item.title.toLowerCase().includes(q) ||
+        item.category.toLowerCase().includes(q) ||
+        item.desc.toLowerCase().includes(q)
+    );
+  }, [searchQuery, searchItems]);
 
   // Determine if the currently logged in user is a platform Super Admin
   const isSuperAdmin = Boolean(
@@ -223,16 +284,82 @@ export default function AdminLayout() {
               <Menu size={18} />
             </button>
 
-            <div className="relative w-40 sm:w-80">
+            <div ref={searchContainerRef} className="relative w-48 sm:w-80">
               <Search
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-cyan-400"
                 size={16}
               />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsSearchOpen(true);
+                }}
+                onFocus={() => setIsSearchOpen(true)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setIsSearchOpen(false);
+                  } else if (e.key === "Enter" && searchResults.length > 0) {
+                    navigate(searchResults[0].path);
+                    setIsSearchOpen(false);
+                    setSearchQuery("");
+                  }
+                }}
                 placeholder="Search resources, agents, companies..."
-                className="w-full h-9 pl-10 pr-4 bg-slate-900/80 border border-indigo-500/30 rounded-xl text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400"
+                className="w-full h-9 pl-10 pr-8 bg-slate-900/80 border border-indigo-500/30 rounded-xl text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs p-1"
+                >
+                  ✕
+                </button>
+              )}
+
+              {/* Floating Dropdown Results */}
+              {isSearchOpen && searchQuery.trim().length > 0 && (
+                <div className="absolute left-0 right-0 top-11 bg-slate-900/95 backdrop-blur-xl border border-indigo-500/40 rounded-2xl shadow-2xl overflow-hidden z-50 max-h-80 overflow-y-auto divide-y divide-indigo-500/20 animate-in fade-in zoom-in-95">
+                  {searchResults.length > 0 ? (
+                    searchResults.map((item, idx) => {
+                      const Icon = item.icon;
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            navigate(item.path);
+                            setIsSearchOpen(false);
+                            setSearchQuery("");
+                          }}
+                          className="p-3 hover:bg-indigo-600/20 cursor-pointer flex items-center gap-3 transition-colors group"
+                        >
+                          <div className="p-2 rounded-xl bg-slate-800 text-cyan-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors shrink-0">
+                            <Icon size={14} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-white group-hover:text-cyan-300 truncate">
+                                {item.title}
+                              </span>
+                              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                                {item.category}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                              {item.desc}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="p-4 text-center text-xs text-slate-400 font-medium">
+                      No matching resources found for "{searchQuery}"
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
