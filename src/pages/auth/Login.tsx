@@ -37,16 +37,53 @@ export default function Login() {
       return;
     }
 
+    const emailLower = formData.email.trim().toLowerCase();
+    const isDialog = emailLower.includes('dialog');
+
+    // Security check: Check if this company / tenant workspace was deleted by Super Admin
+    const deletedRaw = typeof window !== 'undefined' ? localStorage.getItem('omni_deleted_companies') : null;
+    let deletedSet: Set<string> = new Set();
+    if (deletedRaw) {
+      try {
+        const arr = JSON.parse(deletedRaw);
+        if (Array.isArray(arr)) deletedSet = new Set(arr.map((s: string) => String(s).toLowerCase()));
+      } catch {}
+    }
+
+    const isDeleted =
+      deletedSet.has(emailLower) ||
+      (isDialog && (
+        deletedSet.has('comp-dialog') ||
+        deletedSet.has('dialog') ||
+        deletedSet.has('dialog axiata') ||
+        deletedSet.has('dialog axiata plc')
+      ));
+
+    if (isDeleted) {
+      setErrors({ email: 'This company workspace has been deleted by the Super Admin. Access is revoked.' });
+      return;
+    }
+
     setIsLoading(true);
     try {
       let data;
       try {
         data = await apiClient.post('/api/auth/login', { email: formData.email, password: formData.password });
-      } catch {
-        // Fallback local authentication for dev testing
+      } catch (postErr: any) {
+        // If the backend returned an explicit error (e.g. 401 Unauthorized / deleted workspace), display it
+        if (postErr?.message && !postErr.message.toLowerCase().includes('failed to fetch') && !postErr.message.toLowerCase().includes('network')) {
+          setErrors({ email: postErr.message || 'Invalid credentials or workspace has been deactivated.' });
+          return;
+        }
+
+        // Fallback local authentication ONLY for non-deleted active companies in offline dev testing
+        if (isDeleted) {
+          setErrors({ email: 'This company workspace has been deleted by the Super Admin. Access is revoked.' });
+          return;
+        }
+
         const isLiveAgent = formData.email.includes('agent');
         const role = isLiveAgent ? 'live_agent' : 'admin';
-        const isDialog = formData.email.toLowerCase().includes('dialog');
         const companyName = isDialog ? 'Dialog Axiata' : 'SLT Global';
         const tenantId = isDialog ? 'dialog' : 'slt';
         data = {
