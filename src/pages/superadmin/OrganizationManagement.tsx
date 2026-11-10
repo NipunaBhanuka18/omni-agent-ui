@@ -25,69 +25,118 @@ export default function OrganizationManagement() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const initialCompaniesByIndustry: Record<string, any[]> = {
-    tech: [
-      {
-        id: 'comp-dialog',
-        name: 'Dialog Axiata PLC',
-        email: 'admin@dialog.lk',
-        adminName: 'Dialog Admin',
-        status: 'ACTIVE',
-        lastLogin: 'Today, 11:30 AM',
-        industry: 'Telecommunications & Tech',
-        phone: '+94 77 733 3333',
-        location: 'Colombo, Sri Lanka',
-        website: 'www.dialog.lk',
-      },
-      {
-        id: 'comp-slt',
-        name: 'SLT Global (Telecom PLC)',
-        email: 'admin@slt.lk',
-        adminName: 'SLT Admin',
-        status: 'ACTIVE',
-        lastLogin: 'Today, 09:15 AM',
-        industry: 'Telecommunications & Tech',
-        phone: '+94 11 202 1000',
-        location: 'Colombo, Sri Lanka',
-        website: 'www.slt.lk',
-      },
-      {
-        id: 'comp-apex',
-        name: 'ABC Company (pvt) Ltd',
-        email: 'admin@abccompany.com',
-        adminName: 'Apex Staff',
-        status: 'ACTIVE',
-        lastLogin: 'Yesterday',
-        industry: 'Enterprise Software',
-        phone: '+94 11 555 8899',
-        location: 'Colombo, Sri Lanka',
-        website: 'www.abccompany.com',
-      },
-    ],
-    finance: [
-      {
-        id: 'comp-combank',
-        name: 'Commercial Bank PLC',
-        email: 'contact@combank.net',
-        adminName: 'Bank Admin',
-        status: 'ACTIVE',
-        lastLogin: '2 days ago',
-        industry: 'Banking & Finance',
-        phone: '+94 11 244 8448',
-        location: 'Colombo, Sri Lanka',
-        website: 'www.combank.lk',
-      },
-    ],
-    edu: [],
-    healthcare: [],
-    manufacturing: [],
-    other: [],
+  // Helper to load deleted company identifiers
+  const getDeletedCompanyIds = (): Set<string> => {
+    if (typeof window === 'undefined') return new Set();
+    const saved = localStorage.getItem('omni_deleted_companies');
+    if (saved) {
+      try {
+        const arr = JSON.parse(saved);
+        if (Array.isArray(arr)) return new Set(arr.map((s: string) => String(s).toLowerCase()));
+      } catch {}
+    }
+    return new Set();
   };
 
-  const [companies, setCompanies] = useState<Record<string, any[]>>(initialCompaniesByIndustry);
+  const isCompanyDeleted = (comp: any, deletedSet: Set<string>): boolean => {
+    if (!comp) return false;
+    const id = comp.id ? String(comp.id).toLowerCase() : '';
+    const name = comp.name ? String(comp.name).toLowerCase() : '';
+    const email = comp.email ? String(comp.email).toLowerCase() : '';
+    return deletedSet.has(id) || deletedSet.has(name) || (email !== '' && deletedSet.has(email));
+  };
+
+  // Helper to get initial / cached companies
+  const getInitialCompanies = (): Record<string, any[]> => {
+    const deletedSet = getDeletedCompanyIds();
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('omni_organizations');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed === 'object') {
+            const cleaned: Record<string, any[]> = { tech: [], finance: [], edu: [], healthcare: [], manufacturing: [], other: [] };
+            Object.keys(parsed).forEach((cat) => {
+              cleaned[cat] = (parsed[cat] || []).filter((c: any) => !isCompanyDeleted(c, deletedSet));
+            });
+            return cleaned;
+          }
+        } catch {}
+      }
+    }
+
+    // Default mock data (only if not deleted by the user)
+    const base: Record<string, any[]> = {
+      tech: [
+        {
+          id: 'comp-dialog',
+          name: 'Dialog Axiata PLC',
+          email: 'admin@dialog.lk',
+          adminName: 'Dialog Admin',
+          status: 'ACTIVE',
+          lastLogin: 'Today, 11:30 AM',
+          industry: 'Telecommunications & Tech',
+          phone: '+94 77 733 3333',
+          location: 'Colombo, Sri Lanka',
+          website: 'www.dialog.lk',
+        },
+        {
+          id: 'comp-slt',
+          name: 'SLT Global (Telecom PLC)',
+          email: 'admin@slt.lk',
+          adminName: 'SLT Admin',
+          status: 'ACTIVE',
+          lastLogin: 'Today, 09:15 AM',
+          industry: 'Telecommunications & Tech',
+          phone: '+94 11 202 1000',
+          location: 'Colombo, Sri Lanka',
+          website: 'www.slt.lk',
+        },
+        {
+          id: 'comp-apex',
+          name: 'ABC Company (pvt) Ltd',
+          email: 'admin@abccompany.com',
+          adminName: 'Apex Staff',
+          status: 'ACTIVE',
+          lastLogin: 'Yesterday',
+          industry: 'Enterprise Software',
+          phone: '+94 11 555 8899',
+          location: 'Colombo, Sri Lanka',
+          website: 'www.abccompany.com',
+        },
+      ],
+      finance: [
+        {
+          id: 'comp-combank',
+          name: 'Commercial Bank PLC',
+          email: 'contact@combank.net',
+          adminName: 'Bank Admin',
+          status: 'ACTIVE',
+          lastLogin: '2 days ago',
+          industry: 'Banking & Finance',
+          phone: '+94 11 244 8448',
+          location: 'Colombo, Sri Lanka',
+          website: 'www.combank.lk',
+        },
+      ],
+      edu: [],
+      healthcare: [],
+      manufacturing: [],
+      other: [],
+    };
+
+    const filteredBase: Record<string, any[]> = { tech: [], finance: [], edu: [], healthcare: [], manufacturing: [], other: [] };
+    Object.keys(base).forEach((cat) => {
+      filteredBase[cat] = base[cat].filter((c: any) => !isCompanyDeleted(c, deletedSet));
+    });
+    return filteredBase;
+  };
+
+  const [companies, setCompanies] = useState<Record<string, any[]>>(getInitialCompanies);
 
   // Fetch active company workspaces from backend
   const fetchCompanies = async () => {
+    const deletedSet = getDeletedCompanyIds();
     try {
       const rawToken = (typeof window !== 'undefined' && localStorage.getItem('omni_token')) || '';
       const authHeader = rawToken ? (rawToken.startsWith('Bearer ') ? rawToken : `Bearer ${rawToken}`) : '';
@@ -97,95 +146,48 @@ export default function OrganizationManagement() {
       const data = await res.json();
       const list = Array.isArray(data) ? data : (data.registrations || []);
 
-      const freshCompanies: Record<string, any[]> = {
-        tech: [
-          {
-            id: 'comp-dialog',
-            name: 'Dialog Axiata PLC',
-            email: 'admin@dialog.lk',
-            adminName: 'Dialog Admin',
-            status: 'ACTIVE',
-            lastLogin: 'Today, 11:30 AM',
-            industry: 'Telecommunications & Tech',
-            phone: '+94 77 733 3333',
-            location: 'Colombo, Sri Lanka',
-            website: 'www.dialog.lk',
-          },
-          {
-            id: 'comp-slt',
-            name: 'SLT Global (Telecom PLC)',
-            email: 'admin@slt.lk',
-            adminName: 'SLT Admin',
-            status: 'ACTIVE',
-            lastLogin: 'Today, 09:15 AM',
-            industry: 'Telecommunications & Tech',
-            phone: '+94 11 202 1000',
-            location: 'Colombo, Sri Lanka',
-            website: 'www.slt.lk',
-          },
-          {
-            id: 'comp-apex',
-            name: 'ABC Company (pvt) Ltd',
-            email: 'admin@abccompany.com',
-            adminName: 'Apex Staff',
-            status: 'ACTIVE',
-            lastLogin: 'Yesterday',
-            industry: 'Enterprise Software',
-            phone: '+94 11 555 8899',
-            location: 'Colombo, Sri Lanka',
-            website: 'www.abccompany.com',
-          },
-        ],
-        finance: [
-          {
-            id: 'comp-combank',
-            name: 'Commercial Bank PLC',
-            email: 'contact@combank.net',
-            adminName: 'Bank Admin',
-            status: 'ACTIVE',
-            lastLogin: '2 days ago',
-            industry: 'Banking & Finance',
-            phone: '+94 11 244 8448',
-            location: 'Colombo, Sri Lanka',
-            website: 'www.combank.lk',
-          },
-        ],
-        edu: [],
-        healthcare: [],
-        manufacturing: [],
-        other: [],
-      };
+      setCompanies((prev) => {
+        const next = { ...prev };
+        if (Array.isArray(list) && list.length > 0) {
+          list.forEach((req: any) => {
+            const rawInd = (req.industry || req.companyType || 'tech').toLowerCase();
+            let targetTab = 'tech';
+            if (rawInd.includes('finance')) targetTab = 'finance';
+            else if (rawInd.includes('edu')) targetTab = 'edu';
+            else if (rawInd.includes('health')) targetTab = 'healthcare';
+            else if (rawInd.includes('manuf')) targetTab = 'manufacturing';
+            else if (rawInd.includes('tech')) targetTab = 'tech';
+            else targetTab = 'other';
 
-      if (Array.isArray(list) && list.length > 0) {
-        list.forEach((req: any) => {
-          const rawInd = (req.industry || req.companyType || 'tech').toLowerCase();
-          let targetTab = 'tech';
-          if (rawInd.includes('finance')) targetTab = 'finance';
-          else if (rawInd.includes('edu')) targetTab = 'edu';
-          else if (rawInd.includes('health')) targetTab = 'healthcare';
-          else if (rawInd.includes('manuf')) targetTab = 'manufacturing';
-          else if (rawInd.includes('tech')) targetTab = 'tech';
-          else targetTab = 'other';
+            const compObj = {
+              id: req.id,
+              name: req.companyName || req.name,
+              email: req.companyEmail || req.email,
+              adminName: req.adminName || 'Admin',
+              status: 'ACTIVE',
+              lastLogin: 'Active',
+              industry: req.industry || req.companyType || 'Technology',
+              phone: req.phone || req.adminPhone || '-',
+              location: req.city || req.country || 'Sri Lanka',
+              website: req.website || '-',
+            };
 
-          const compObj = {
-            id: req.id,
-            name: req.companyName || req.name,
-            email: req.companyEmail || req.email,
-            adminName: req.adminName || 'Admin',
-            status: 'ACTIVE',
-            lastLogin: 'Active',
-            industry: req.industry || req.companyType || 'Technology',
-            phone: req.phone || req.adminPhone || '-',
-            location: req.city || req.country || 'Sri Lanka',
-            website: req.website || '-',
-          };
+            // Don't add if it was deleted by the user
+            if (isCompanyDeleted(compObj, deletedSet)) {
+              return;
+            }
 
-          if (!freshCompanies[targetTab].some((c) => c.name.toLowerCase() === compObj.name.toLowerCase())) {
-            freshCompanies[targetTab].push(compObj);
-          }
-        });
-      }
-      setCompanies(freshCompanies);
+            if (!next[targetTab]) next[targetTab] = [];
+            if (!next[targetTab].some((c) => c.name.toLowerCase() === compObj.name.toLowerCase() || c.id === compObj.id)) {
+              next[targetTab] = [...next[targetTab], compObj];
+            }
+          });
+        }
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('omni_organizations', JSON.stringify(next));
+        }
+        return next;
+      });
     } catch {
       console.warn('Backend not reachable');
     }
@@ -202,15 +204,45 @@ export default function OrganizationManagement() {
     setShowDeleteModal(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (deletingOrg) {
-      setCompanies((prev) => ({
-        ...prev,
-        [activeTab]: (prev[activeTab] || []).filter((c: any) => c.id !== deletingOrg.id),
-      }));
-    }
+  const handleConfirmDelete = async () => {
+    if (!deletingOrg) return;
+    const org = deletingOrg;
     setShowDeleteModal(false);
-    addToast(`Organization "${deletingOrg?.name}" has been deleted.`, 'error');
+
+    // 1. Record deleted identifiers in blacklist
+    const deletedSet = getDeletedCompanyIds();
+    if (org.id) deletedSet.add(String(org.id).toLowerCase());
+    if (org.name) deletedSet.add(String(org.name).toLowerCase());
+    if (org.email) deletedSet.add(String(org.email).toLowerCase());
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('omni_deleted_companies', JSON.stringify(Array.from(deletedSet)));
+    }
+
+    // 2. Remove from React state and localStorage
+    setCompanies((prev) => {
+      const updated: Record<string, any[]> = {};
+      Object.keys(prev).forEach((cat) => {
+        updated[cat] = (prev[cat] || []).filter((c: any) => !isCompanyDeleted(c, deletedSet));
+      });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('omni_organizations', JSON.stringify(updated));
+      }
+      return updated;
+    });
+
+    // 3. Call backend DELETE endpoint
+    try {
+      const rawToken = (typeof window !== 'undefined' && localStorage.getItem('omni_token')) || '';
+      const authHeader = rawToken ? (rawToken.startsWith('Bearer ') ? rawToken : `Bearer ${rawToken}`) : '';
+      await fetch(`${API}/api/registrations/${org.id}`, {
+        method: 'DELETE',
+        headers: authHeader ? { Authorization: authHeader } : {},
+      });
+    } catch (err) {
+      console.warn('Backend delete sync:', err);
+    }
+
+    addToast(`Organization "${org.name}" has been permanently deleted.`, 'error');
   };
 
   const handleOpenDetail = (company: any) => {
