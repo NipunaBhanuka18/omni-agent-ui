@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Building2, Search, CheckCircle2, XCircle, Filter, Download, ArrowLeft, Eye, Edit3, Trash2, ShieldCheck, Clock, UserCheck, AlertTriangle, Key, LogOut } from 'lucide-react';
 import InputField from '@/components/InputField';
 import Button from '@/components/Button';
@@ -8,6 +9,7 @@ import ToastContainer, { type ToastMessage } from '@/components/Toast';
 const API = 'http://localhost:3001';
 
 export default function OrganizationManagement() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'tech' | 'finance' | 'edu' | 'healthcare' | 'manufacturing' | 'other'>('tech');
   const [viewMode, setViewMode] = useState<'active' | 'detail'>('active');
   const [selectedOrg, setSelectedOrg] = useState<any>(null);
@@ -374,7 +376,10 @@ export default function OrganizationManagement() {
                       <td colSpan={5} className="py-12 text-center space-y-3">
                         <Building2 className="w-10 h-10 text-slate-300 mx-auto" />
                         <span className="text-xs font-bold text-slate-400 block">No Companies Registered Yet</span>
-                        <button className="px-4 py-2 rounded-xl bg-purple-900 text-white font-bold text-xs shadow-md">
+                        <button
+                          onClick={() => navigate('/register')}
+                          className="px-4 py-2 rounded-xl bg-purple-900 hover:bg-purple-800 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+                        >
                           + Add Company
                         </button>
                       </td>
