@@ -141,6 +141,23 @@ export default function Register() {
         return;
       }
       if (data.token && data.user) {
+        // Clean up any stale deleted company flags for this newly created workspace
+        if (typeof window !== 'undefined') {
+          try {
+            const saved = localStorage.getItem('omni_deleted_companies');
+            if (saved) {
+              const list: string[] = JSON.parse(saved);
+              const emailLower = (formData.companyEmail || '').toLowerCase();
+              const adminEmailLower = (formData.adminEmail || '').toLowerCase();
+              const nameLower = (formData.companyName || '').toLowerCase();
+              const filtered = list.filter((item) => {
+                const s = String(item).toLowerCase();
+                return s !== emailLower && s !== adminEmailLower && s !== nameLower;
+              });
+              localStorage.setItem('omni_deleted_companies', JSON.stringify(filtered));
+            }
+          } catch {}
+        }
         login(data.user, data.token);
         addToast('Workspace created! Entering your workspace...', 'success');
         navigate('/dashboard');

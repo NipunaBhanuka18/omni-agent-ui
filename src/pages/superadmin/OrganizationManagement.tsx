@@ -48,6 +48,7 @@ export default function OrganizationManagement() {
 
   // Helper to get initial / cached companies
   const getInitialCompanies = (): Record<string, any[]> => {
+    const emptyState: Record<string, any[]> = { tech: [], finance: [], edu: [], healthcare: [], manufacturing: [], other: [] };
     const deletedSet = getDeletedCompanyIds();
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('omni_organizations');
@@ -64,72 +65,7 @@ export default function OrganizationManagement() {
         } catch {}
       }
     }
-
-    // Default mock data (only if not deleted by the user)
-    const base: Record<string, any[]> = {
-      tech: [
-        {
-          id: 'comp-dialog',
-          name: 'Dialog Axiata PLC',
-          email: 'admin@dialog.lk',
-          adminName: 'Dialog Admin',
-          status: 'ACTIVE',
-          lastLogin: 'Today, 11:30 AM',
-          industry: 'Telecommunications & Tech',
-          phone: '+94 77 733 3333',
-          location: 'Colombo, Sri Lanka',
-          website: 'www.dialog.lk',
-        },
-        {
-          id: 'comp-slt',
-          name: 'SLT Global (Telecom PLC)',
-          email: 'admin@slt.lk',
-          adminName: 'SLT Admin',
-          status: 'ACTIVE',
-          lastLogin: 'Today, 09:15 AM',
-          industry: 'Telecommunications & Tech',
-          phone: '+94 11 202 1000',
-          location: 'Colombo, Sri Lanka',
-          website: 'www.slt.lk',
-        },
-        {
-          id: 'comp-apex',
-          name: 'ABC Company (pvt) Ltd',
-          email: 'admin@abccompany.com',
-          adminName: 'Apex Staff',
-          status: 'ACTIVE',
-          lastLogin: 'Yesterday',
-          industry: 'Enterprise Software',
-          phone: '+94 11 555 8899',
-          location: 'Colombo, Sri Lanka',
-          website: 'www.abccompany.com',
-        },
-      ],
-      finance: [
-        {
-          id: 'comp-combank',
-          name: 'Commercial Bank PLC',
-          email: 'contact@combank.net',
-          adminName: 'Bank Admin',
-          status: 'ACTIVE',
-          lastLogin: '2 days ago',
-          industry: 'Banking & Finance',
-          phone: '+94 11 244 8448',
-          location: 'Colombo, Sri Lanka',
-          website: 'www.combank.lk',
-        },
-      ],
-      edu: [],
-      healthcare: [],
-      manufacturing: [],
-      other: [],
-    };
-
-    const filteredBase: Record<string, any[]> = { tech: [], finance: [], edu: [], healthcare: [], manufacturing: [], other: [] };
-    Object.keys(base).forEach((cat) => {
-      filteredBase[cat] = base[cat].filter((c: any) => !isCompanyDeleted(c, deletedSet));
-    });
-    return filteredBase;
+    return emptyState;
   };
 
   const [companies, setCompanies] = useState<Record<string, any[]>>(getInitialCompanies);
@@ -146,48 +82,46 @@ export default function OrganizationManagement() {
       const data = await res.json();
       const list = Array.isArray(data) ? data : (data.registrations || []);
 
-      setCompanies((prev) => {
-        const next = { ...prev };
-        if (Array.isArray(list) && list.length > 0) {
-          list.forEach((req: any) => {
-            const rawInd = (req.industry || req.companyType || 'tech').toLowerCase();
-            let targetTab = 'tech';
-            if (rawInd.includes('finance')) targetTab = 'finance';
-            else if (rawInd.includes('edu')) targetTab = 'edu';
-            else if (rawInd.includes('health')) targetTab = 'healthcare';
-            else if (rawInd.includes('manuf')) targetTab = 'manufacturing';
-            else if (rawInd.includes('tech')) targetTab = 'tech';
-            else targetTab = 'other';
+      const next: Record<string, any[]> = { tech: [], finance: [], edu: [], healthcare: [], manufacturing: [], other: [] };
+      if (Array.isArray(list) && list.length > 0) {
+        list.forEach((req: any) => {
+          const rawInd = (req.industry || req.companyType || 'tech').toLowerCase();
+          let targetTab = 'tech';
+          if (rawInd.includes('finance')) targetTab = 'finance';
+          else if (rawInd.includes('edu')) targetTab = 'edu';
+          else if (rawInd.includes('health')) targetTab = 'healthcare';
+          else if (rawInd.includes('manuf')) targetTab = 'manufacturing';
+          else if (rawInd.includes('tech')) targetTab = 'tech';
+          else targetTab = 'other';
 
-            const compObj = {
-              id: req.id,
-              name: req.companyName || req.name,
-              email: req.companyEmail || req.email,
-              adminName: req.adminName || 'Admin',
-              status: 'ACTIVE',
-              lastLogin: 'Active',
-              industry: req.industry || req.companyType || 'Technology',
-              phone: req.phone || req.adminPhone || '-',
-              location: req.city || req.country || 'Sri Lanka',
-              website: req.website || '-',
-            };
+          const compObj = {
+            id: req.id,
+            name: req.companyName || req.name,
+            email: req.companyEmail || req.email,
+            adminName: req.adminName || 'Admin',
+            status: 'ACTIVE',
+            lastLogin: 'Active',
+            industry: req.industry || req.companyType || 'Technology',
+            phone: req.phone || req.adminPhone || '-',
+            location: req.city || req.country || 'Sri Lanka',
+            website: req.website || '-',
+            companySlug: req.companySlug,
+          };
 
-            // Don't add if it was deleted by the user
-            if (isCompanyDeleted(compObj, deletedSet)) {
-              return;
-            }
+          // Don't add if it was deleted by the user
+          if (isCompanyDeleted(compObj, deletedSet)) {
+            return;
+          }
 
-            if (!next[targetTab]) next[targetTab] = [];
-            if (!next[targetTab].some((c) => c.name.toLowerCase() === compObj.name.toLowerCase() || c.id === compObj.id)) {
-              next[targetTab] = [...next[targetTab], compObj];
-            }
-          });
-        }
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('omni_organizations', JSON.stringify(next));
-        }
-        return next;
-      });
+          if (!next[targetTab].some((c) => c.name.toLowerCase() === compObj.name.toLowerCase() || c.id === compObj.id)) {
+            next[targetTab].push(compObj);
+          }
+        });
+      }
+      setCompanies(next);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('omni_organizations', JSON.stringify(next));
+      }
     } catch {
       console.warn('Backend not reachable');
     }
@@ -214,6 +148,7 @@ export default function OrganizationManagement() {
     if (org.id) deletedSet.add(String(org.id).toLowerCase());
     if (org.name) deletedSet.add(String(org.name).toLowerCase());
     if (org.email) deletedSet.add(String(org.email).toLowerCase());
+    if (org.companySlug) deletedSet.add(String(org.companySlug).toLowerCase());
     if (typeof window !== 'undefined') {
       localStorage.setItem('omni_deleted_companies', JSON.stringify(Array.from(deletedSet)));
     }
@@ -230,11 +165,16 @@ export default function OrganizationManagement() {
       return updated;
     });
 
-    // 3. Call backend DELETE endpoint
+    // 3. Call backend DELETE endpoint with parameters
     try {
       const rawToken = (typeof window !== 'undefined' && localStorage.getItem('omni_token')) || '';
       const authHeader = rawToken ? (rawToken.startsWith('Bearer ') ? rawToken : `Bearer ${rawToken}`) : '';
-      await fetch(`${API}/api/registrations/${org.id}`, {
+      const params = new URLSearchParams();
+      if (org.name) params.set('name', org.name);
+      if (org.email) params.set('email', org.email);
+      if (org.companySlug) params.set('slug', org.companySlug);
+
+      await fetch(`${API}/api/registrations/${encodeURIComponent(org.id)}?${params.toString()}`, {
         method: 'DELETE',
         headers: authHeader ? { Authorization: authHeader } : {},
       });

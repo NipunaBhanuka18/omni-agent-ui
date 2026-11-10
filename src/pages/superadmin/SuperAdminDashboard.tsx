@@ -41,7 +41,7 @@ export default function SuperAdminDashboard() {
   }, []);
 
   const pendingCount = 0;
-  const approvedCount = registrations.length || stats.totalAvailability || 4;
+  const approvedCount = registrations.length;
   const totalCount = approvedCount;
 
   // Dynamic recent activity logs from real backend registrations
@@ -228,7 +228,7 @@ export default function SuperAdminDashboard() {
       {/* Quick Access Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         
-        {/* Company Registration Request Card */}
+        {/* Company Workspaces Card */}
         <div
           onClick={() => navigate('/admin/organizations')}
           className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 text-white p-6 rounded-3xl shadow-xl border border-purple-500/30 flex items-center justify-between cursor-pointer hover:border-purple-400 transition-all group"
@@ -238,13 +238,13 @@ export default function SuperAdminDashboard() {
               <Building2 className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-sm font-black">Company Registration Request</h3>
-              <p className="text-xs text-purple-200">Review and approve new company onboarding submissions.</p>
+              <h3 className="text-sm font-black">Active Company Workspaces</h3>
+              <p className="text-xs text-purple-200">Manage and configure active company workspaces and tenant policies.</p>
             </div>
           </div>
 
           <span className="w-10 h-10 rounded-2xl bg-purple-500/20 border border-purple-400/40 text-cyan-300 font-black text-base shadow-md flex items-center justify-center shrink-0">
-            {pendingCount}
+            {approvedCount}
           </span>
         </div>
 
