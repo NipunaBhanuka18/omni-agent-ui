@@ -125,8 +125,8 @@ function App() {
 
         {/* Protected Dashboard Routes (Company Workplace & Super Admin Workplace) */}
         <Route element={<ProtectedRoute />}>
+          {/* Company Workplace (Accessible to Company Admins and Super Admins) */}
           <Route element={<AdminLayout />}>
-            {/* Company Workplace */}
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/agent/console" element={<LiveAgentConsole />} />
             <Route path="/live-agent" element={<LiveAgentConsole />} />
@@ -139,9 +139,11 @@ function App() {
             <Route path="/tools" element={<ToolsManagement />} />
             <Route path="/tools-forms" element={<ToolsManagement />} />
             <Route path="/notifications" element={<Notifications />} />
+          </Route>
 
-            {/* Super Admin Workplace (Guarded) */}
-            <Route element={<SuperAdminRoute />}>
+          {/* Super Admin Workplace (Strictly Guarded at Route Level) */}
+          <Route element={<SuperAdminRoute />}>
+            <Route element={<AdminLayout />}>
               <Route path="/admin/dashboard" element={<SuperAdminDashboard />} />
               <Route path="/admin/chat" element={<ChatBotPlayground />} />
               <Route path="/admin/organizations" element={<OrganizationManagement />} />
