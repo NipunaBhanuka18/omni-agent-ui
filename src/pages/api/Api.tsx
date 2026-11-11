@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Code2, Plus, Settings, AlertTriangle, CheckCircle2, RefreshCw, Activity, ArrowUpRight, Building2, ArrowLeft, Power } from 'lucide-react';
 import Button from '@/components/Button';
 import InputField from '@/components/InputField';
+import { ENV } from '@/config/env';
 
 export default function Api() {
   const [selectedOrg, setSelectedOrg] = useState<string | null>('ABC Company (pvt) Ltd');
@@ -16,12 +17,14 @@ export default function Api() {
   React.useEffect(() => {
     const fetchOrgs = async () => {
       try {
-        const res = await fetch('http://localhost:3001/api/registrations');
+        const token = localStorage.getItem('omni_token') || 'dev-token-staff';
+        const headers = { Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}` };
+        const res = await fetch(`${ENV.API_BASE_URL}/api/registrations`, { headers });
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.registrations)) {
             const activeOrgs = data.registrations
-              .filter((r: any) => r.status === 'Approved')
+              .filter((r: any) => r.status === 'Approved' || r.status === 'Active')
               .map((r: any, idx: number) => ({
                 id: r.id || String(idx + 1),
                 name: r.companyName,

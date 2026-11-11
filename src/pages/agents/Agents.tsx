@@ -24,6 +24,7 @@ import Button from '@/components/Button';
 import InputField from '@/components/InputField';
 import { apiClient } from '@/api/apiClient';
 import { useAuthStore } from '@/store/authStore';
+import { ENV } from '@/config/env';
 
 export interface KbItem {
   kbId: string;
@@ -118,7 +119,7 @@ export default function Agents() {
     const fetchKnowledgeBases = async () => {
       try {
         const token = localStorage.getItem('omni_token') || 'dev-token-staff';
-        const res = await fetch('http://localhost:3001/api/dev/admin/knowledge-bases', {
+        const res = await fetch(`${ENV.API_BASE_URL}/api/dev/admin/knowledge-bases`, {
           headers: {
             Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
             'x-tenant-id': user?.tenantId || 'slt',
@@ -222,7 +223,7 @@ export default function Agents() {
 
     try {
       const token = localStorage.getItem('omni_token') || 'dev-token-staff';
-      await fetch('http://localhost:3001/api/dev/admin/knowledge-bases', {
+      await fetch(`${ENV.API_BASE_URL}/api/dev/admin/knowledge-bases`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -262,7 +263,7 @@ export default function Agents() {
   const handleDeleteKb = async (kbIdToDelete: string) => {
     try {
       const token = localStorage.getItem('omni_token') || 'dev-token-staff';
-      await fetch(`http://localhost:3001/api/dev/admin/knowledge-bases/${kbIdToDelete}`, {
+      await fetch(`${ENV.API_BASE_URL}/api/dev/admin/knowledge-bases/${kbIdToDelete}`, {
         method: 'DELETE',
         headers: {
           Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
@@ -454,7 +455,7 @@ export default function Agents() {
         } catch { }
       }
 
-      await fetch('http://localhost:3001/api/dev/admin/agents', {
+      await fetch(`${ENV.API_BASE_URL}/api/dev/admin/agents`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -483,12 +484,17 @@ export default function Agents() {
   React.useEffect(() => {
     const fetchOrgs = async () => {
       try {
-        const res = await fetch('http://localhost:3001/api/registrations');
+        const token = localStorage.getItem('omni_token') || 'dev-token-staff';
+        const res = await fetch(`${ENV.API_BASE_URL}/api/registrations`, {
+          headers: {
+            Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
+          },
+        });
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.registrations)) {
             const activeOrgs = data.registrations
-              .filter((r: any) => r.status === 'Approved')
+              .filter((r: any) => r.status === 'Approved' || r.status === 'Active')
               .map((r: any, idx: number) => ({
                 id: r.id || String(idx + 1),
                 name: r.companyName,
@@ -549,7 +555,7 @@ export default function Agents() {
         } catch {}
       }
 
-      const res = await fetch('http://localhost:3001/api/agent', {
+      const res = await fetch(`${ENV.API_BASE_URL}/api/agent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

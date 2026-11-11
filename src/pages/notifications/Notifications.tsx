@@ -4,6 +4,7 @@ import Button from '@/components/Button';
 import InputField from '@/components/InputField';
 
 import ToastContainer, { type ToastMessage } from '@/components/Toast';
+import { ENV } from '@/config/env';
 
 export default function Notifications() {
   const [selectedOrg, setSelectedOrg] = useState<string | null>('ABC Company (pvt) Ltd');
@@ -37,12 +38,14 @@ export default function Notifications() {
     // Fetch real organizations from backend API
     const fetchOrgs = async () => {
       try {
-        const res = await fetch('http://localhost:3001/api/registrations');
+        const token = localStorage.getItem('omni_token') || 'dev-token-staff';
+        const headers = { Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}` };
+        const res = await fetch(`${ENV.API_BASE_URL}/api/registrations`, { headers });
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.registrations)) {
             const activeOrgs = data.registrations
-              .filter((r: any) => r.status === 'Approved')
+              .filter((r: any) => r.status === 'Approved' || r.status === 'Active')
               .map((r: any, idx: number) => ({
                 id: r.id || String(idx + 1),
                 name: r.companyName,
@@ -63,7 +66,9 @@ export default function Notifications() {
     // Fetch delivery logs from backend API
     const fetchLogs = async () => {
       try {
-        const res = await fetch('http://localhost:3001/api/telemetry-logs');
+        const token = localStorage.getItem('omni_token') || 'dev-token-staff';
+        const headers = { Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}` };
+        const res = await fetch(`${ENV.API_BASE_URL}/api/telemetry-logs`, { headers });
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.logs)) {
@@ -78,7 +83,9 @@ export default function Notifications() {
     // Fetch personal notifications from backend API
     const fetchNotifications = async () => {
       try {
-        const res = await fetch('http://localhost:3001/api/notifications');
+        const token = localStorage.getItem('omni_token') || 'dev-token-staff';
+        const headers = { Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}` };
+        const res = await fetch(`${ENV.API_BASE_URL}/api/notifications`, { headers });
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.notifications)) {

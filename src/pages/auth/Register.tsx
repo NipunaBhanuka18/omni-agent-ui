@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Bot, Mail, Building2, Globe, User, Layers, Cpu, ArrowRight, Phone, Lock, MapPin, FileText, ChevronRight, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import ToastContainer, { type ToastMessage } from '@/components/Toast';
 import { useAuthStore } from '@/store/authStore';
+import { ENV } from '@/config/env';
 
 // ⭐ Defined OUTSIDE Register — prevents remounting on every keystroke
 // ⭐ inputClass does NOT take errors as param to avoid recreating on every render
@@ -113,7 +114,7 @@ export default function Register() {
     if (!validateStep2()) return;
     setIsLoading(true);
     try {
-      const res = await fetch('http://localhost:3001/api/registrations', {
+      const res = await fetch(`${ENV.API_BASE_URL}/api/registrations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -163,6 +164,19 @@ export default function Register() {
         navigate('/dashboard');
         return;
       }
+
+      if (data.nextAction === 'LOGIN_REQUIRED') {
+        addToast(data.message || 'Workspace is already active. Please log in with your credentials.', 'info');
+        navigate('/login');
+        return;
+      }
+
+      if (data.nextAction === 'EMAIL_VERIFICATION_REQUIRED') {
+        addToast(data.message || 'Workspace created. Please check your admin email for verification instructions.', 'info');
+        navigate('/login');
+        return;
+      }
+
       navigate('/register-success');
     } catch {
       addToast('Could not connect to server. Please make sure the backend is running.', 'error');

@@ -5,8 +5,9 @@ import InputField from '@/components/InputField';
 import Button from '@/components/Button';
 
 import ToastContainer, { type ToastMessage } from '@/components/Toast';
+import { ENV } from '@/config/env';
 
-const API = 'http://localhost:3001';
+const API = ENV.API_BASE_URL;
 
 export default function OrganizationManagement() {
   const navigate = useNavigate();
@@ -110,8 +111,8 @@ export default function OrganizationManagement() {
             companySlug: req.companySlug,
           };
 
-          // Don't add if it was deleted by the user
-          if (isCompanyDeleted(compObj, deletedSet)) {
+          // Don't add if it was deleted by the user or suspended
+          if (isCompanyDeleted(compObj, deletedSet) || (req.status && req.status.toLowerCase() === 'suspended')) {
             return;
           }
 

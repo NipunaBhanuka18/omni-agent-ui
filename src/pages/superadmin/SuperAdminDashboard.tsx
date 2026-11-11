@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, MessageSquare, Smartphone, Globe, Mail, Clock, ShieldCheck, Zap, ArrowRight, CreditCard, Sparkles } from 'lucide-react';
+import { ENV } from '@/config/env';
 
-const API = 'http://localhost:3001';
+const API = ENV.API_BASE_URL;
 
 export default function SuperAdminDashboard() {
   const navigate = useNavigate();
@@ -15,8 +16,12 @@ export default function SuperAdminDashboard() {
 
   useEffect(() => {
     const fetchData = async () => {
+      const rawToken = (typeof window !== 'undefined' && localStorage.getItem('omni_token')) || '';
+      const authHeader = rawToken ? (rawToken.startsWith('Bearer ') ? rawToken : `Bearer ${rawToken}`) : 'Bearer dev-token-superadmin';
+      const headers = { Authorization: authHeader };
+
       try {
-        const statsRes = await fetch(`${API}/api/stats`);
+        const statsRes = await fetch(`${API}/api/stats`, { headers });
         if (statsRes.ok) {
           const statsData = await statsRes.json();
           setStats(statsData);
@@ -26,7 +31,7 @@ export default function SuperAdminDashboard() {
       }
 
       try {
-        const regRes = await fetch(`${API}/api/registrations`);
+        const regRes = await fetch(`${API}/api/registrations`, { headers });
         if (regRes.ok) {
           const regData = await regRes.json();
           if (regData.success && Array.isArray(regData.registrations)) {

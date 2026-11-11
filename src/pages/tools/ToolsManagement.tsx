@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Wrench, Plus, Terminal, Globe, FileText, CheckCircle2, Power, Trash2, Edit2, Shield, Code, Sparkles, ExternalLink } from 'lucide-react';
 import ToastContainer, { type ToastMessage } from '@/components/Toast';
+import { ENV } from '@/config/env';
 
 export interface GovernedTool {
   toolId: string;
@@ -87,7 +88,7 @@ export default function ToolsManagement() {
     const fetchTools = async () => {
       try {
         const token = localStorage.getItem('omni_token') || 'dev-token-staff';
-        const res = await fetch('http://localhost:3001/api/dev/admin/tools', {
+        const res = await fetch(`${ENV.API_BASE_URL}/api/dev/admin/tools`, {
           headers: {
             Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
             'x-tenant-id': 'dialog',

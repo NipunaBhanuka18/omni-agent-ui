@@ -4,8 +4,9 @@ import { MessageSquare, Smartphone, Globe, Mail, CheckCircle2, AlertTriangle, Re
 import InputField from '@/components/InputField';
 import Button from '@/components/Button';
 import ToastContainer, { type ToastMessage } from '@/components/Toast';
+import { ENV } from '@/config/env';
 
-const API = 'http://localhost:3001';
+const API = ENV.API_BASE_URL;
 
 export default function Channels() {
   const [searchParams] = useSearchParams();

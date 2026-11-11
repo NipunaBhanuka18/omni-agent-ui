@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Bot, Shield, Mail, Lock, User } from 'lucide-react';
 import InputField from '@/components/InputField';
 import Button from '@/components/Button';
+import { ENV } from '@/config/env';
 
 export default function RegisterAdmin() {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ export default function RegisterAdmin() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('http://localhost:3001/api/auth/register-admin', {
+      const res = await fetch(`${ENV.API_BASE_URL}/api/auth/register-admin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fullName, email, password }),

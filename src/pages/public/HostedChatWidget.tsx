@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { Bot, Send, User, Headset, CheckCircle2, ShieldCheck, RefreshCw, AlertCircle, FileText } from 'lucide-react';
 import { apiClient } from '@/api/apiClient';
+import { ENV } from '@/config/env';
 
 interface FormField {
   id: string;
@@ -178,7 +179,7 @@ export default function HostedChatWidget() {
         detectedIntent = 'check_balance';
       }
 
-      const res = await fetch('http://localhost:3001/api/agent', {
+      const res = await fetch(`${ENV.API_BASE_URL}/api/agent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -301,7 +302,7 @@ export default function HostedChatWidget() {
     const sessId = 'sess-dialog-001';
 
     try {
-      await fetch('http://localhost:3001/api/chat/handoff/request', {
+      await fetch(`${ENV.API_BASE_URL}/api/chat/handoff/request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

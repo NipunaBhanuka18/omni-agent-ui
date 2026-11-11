@@ -4,6 +4,7 @@ import { Bot, Shield } from 'lucide-react';
 import InputField from '@/components/InputField';
 import Button from '@/components/Button';
 import { useAuthStore } from '@/store/authStore';
+import { ENV } from '@/config/env';
 import ToastContainer, { type ToastMessage } from '@/components/Toast';
 
 export default function LoginAdmin() {
@@ -68,20 +69,11 @@ export default function LoginAdmin() {
     setIsLoading(true);
 
     try {
-      let res;
-      try {
-        res = await fetch('http://localhost:3001/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
-      } catch {
-        res = await fetch('http://127.0.0.1:3001/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
-      }
+      const res = await fetch(`${ENV.API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
       const data = await res.json();
 
